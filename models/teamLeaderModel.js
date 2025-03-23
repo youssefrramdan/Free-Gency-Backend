@@ -3,6 +3,12 @@ import bcrypt from 'bcryptjs';
 
 const teamLeaderSchema = new mongoose.Schema(
   {
+    teamLeaderName: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
     teamName: {
       type: String,
       required: [true, 'Team name is required'],
@@ -25,11 +31,11 @@ const teamLeaderSchema = new mongoose.Schema(
       default: 'default-team-logo.png',
     },
     aboutUs: {
-        type: String,
-        required: [true, 'About us description is required'],
-        minlength: [100, 'About us must be at least 100 characters'],
-        maxlength: [2000, 'About us cannot exceed 2000 characters'],
-      },
+      type: String,
+      required: [true, 'About us description is required'],
+      minlength: [100, 'About us must be at least 100 characters'],
+      maxlength: [2000, 'About us cannot exceed 2000 characters'],
+    },
     rating: {
       average: {
         type: Number,
@@ -64,7 +70,7 @@ const teamLeaderSchema = new mongoose.Schema(
         completionDate: Date,
       },
     ],
-    completedProjects: [
+    lastedProjects: [
       {
         title: {
           type: String,
@@ -75,31 +81,6 @@ const teamLeaderSchema = new mongoose.Schema(
         projectUrl: String,
         technologies: [String],
         completionDate: Date,
-      },
-    ],
-    comments: [
-      {
-        user: {
-          type: mongoose.Schema.ObjectId,
-          refPath: 'comments.userModel',
-        },
-        userModel: {
-          type: String,
-          enum: ['Client', 'TeamLeader', 'TeamMember'],
-        },
-        text: {
-          type: String,
-          required: true,
-        },
-        rating: {
-          type: Number,
-          min: 1,
-          max: 5,
-        },
-        createdAt: {
-          type: Date,
-          default: Date.now,
-        },
       },
     ],
     teamCode: {
@@ -132,15 +113,6 @@ const teamLeaderSchema = new mongoose.Schema(
   }
 );
 
-// Generate random team code before saving if not provided
-teamLeaderSchema.pre('save', async function (next) {
-  if (!this.teamCode) {
-    // Generate random 8 character code
-    this.teamCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-  }
-  next();
-});
-
 // Hash password before saving
 teamLeaderSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
@@ -149,26 +121,13 @@ teamLeaderSchema.pre('save', async function (next) {
   next();
 });
 
-// Compare password method
-teamLeaderSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
-};
-
 // Virtual populate for completed projects count
 teamLeaderSchema.virtual('completedProjectsCount', {
-  ref: 'ProjectApplication',
+  ref: 'Project',
   localField: '_id',
-  foreignField: 'teamLeader',
+  foreignField: 'assignedTeam',
   match: { status: 'completed' },
   count: true,
-});
-
-// Virtual populate for team requests
-teamLeaderSchema.virtual('teamRequests', {
-  ref: 'TeamRequest',
-  localField: '_id',
-  foreignField: 'team',
-  options: { sort: { requestDate: -1 } },
 });
 
 // Virtual populate for accepted members
@@ -179,14 +138,26 @@ teamLeaderSchema.virtual('teamMembers', {
   match: { role: 'team_member' },
 });
 
-// Virtual populate for pending requests
-teamLeaderSchema.virtual('pendingRequests', {
-  ref: 'TeamRequest',
-  localField: '_id',
-  foreignField: 'team',
-  match: { status: 'pending' },
-  options: { sort: { requestDate: -1 } },
-});
+// // Method to update average rating and rating count
+// teamLeaderSchema.statics.updateRating = async function (teamId) {
+//   const teamLeader = await this.findById(teamId);
+//   const reviews = await mongoose.model('Review').find({ team: teamId });
+//   const totalRatings = reviews.reduce((acc, review) => acc + review.ratings, 0);
+//   const averageRating = reviews.length > 0 ? totalRatings / reviews.length : 0;
+
+//   teamLeader.rating.average = averageRating;
+//   teamLeader.rating.count = reviews.length;
+//   await teamLeader.save();
+// };
+
+// // Update rating on review save or remove
+// teamLeaderSchema.post('save', async function () {
+//   await this.constructor.updateRating(this._id);
+// });
+
+// teamLeaderSchema.post('remove', async function () {
+//   await this.constructor.updateRating(this._id);
+// });
 
 const TeamLeader = mongoose.model('TeamLeader', teamLeaderSchema);
 export default TeamLeader;

@@ -8,9 +8,47 @@ const categorySchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
+    description: {
+      type: String,
+      trim: true,
+    },
+    image: {
+      type: String,
+      default: 'default-category.png',
+    },
+    teams: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'TeamLeader',
+      },
+    ],
+    projects: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Project',
+      },
+    ],
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
+
+// Virtual fields
+categorySchema.virtual('teamsCount').get(function () {
+  return this.teams.length;
+});
+
+categorySchema.virtual('projectsCount').get(function () {
+  return this.projects.length;
+});
+
+// Indexes
+categorySchema.index({ name: 1 });
+categorySchema.index({ teams: 1 });
+categorySchema.index({ projects: 1 });
 
 const Category = mongoose.model('Category', categorySchema);
 export default Category;

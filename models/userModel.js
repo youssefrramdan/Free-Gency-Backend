@@ -28,11 +28,13 @@ const userSchema = new mongoose.Schema(
       enum: ['client', 'team_member'],
       default: 'client',
     },
-    // إذا كان team member
-    team: {
-      type: mongoose.Schema.ObjectId,
-      ref: 'TeamLeader',
-    },
+    // مصفوفة تحتوي على فرق متعددة يمكن للمستخدم الانضمام إليها
+    teams: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'TeamLeader',
+      },
+    ],
     // إذا كان client
     interests: [
       {
@@ -73,13 +75,13 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Check if user can apply to team
+// Check if user can apply to any team
 userSchema.methods.canApplyToTeam = async function () {
   if (this.role === 'team_member') {
     return false;
   }
 
-  // Check if user has any pending requests
+  // Check if user has any pending requests for any team
   const pendingRequest = await mongoose.model('TeamRequest').findOne({
     user: this._id,
     status: 'pending',
@@ -88,12 +90,11 @@ userSchema.methods.canApplyToTeam = async function () {
   return !pendingRequest;
 };
 
-// Virtual للحصول على معلومات الفريق إذا كان team member
+// Virtual للحصول على جميع الفرق التي ينتمي إليها الفريق
 userSchema.virtual('teamDetails', {
   ref: 'TeamLeader',
-  localField: 'team',
+  localField: 'teams',
   foreignField: '_id',
-  justOne: true,
 });
 
 // Virtual للحصول على طلبات الانضمام للفرق
@@ -104,9 +105,9 @@ userSchema.virtual('teamRequests', {
   options: { sort: { requestDate: -1 } },
 });
 
-// Virtual للتحقق من أن المستخدم عضو في فريق
+// Virtual للتحقق إذا كان المستخدم عضو في فرق متعددة
 userSchema.virtual('isTeamMember').get(function () {
-  return this.role === 'team_member' && this.team;
+  return this.role === 'team_member' && this.teams.length > 0;
 });
 
 const User = mongoose.model('User', userSchema);

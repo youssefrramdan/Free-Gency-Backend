@@ -7,6 +7,14 @@ const teamRequestSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Request must belong to a user'],
     },
+    /**
+     * team [ {
+      type: mongoose.Schema.ObjectId,
+      ref: 'TeamLeader',
+      required: [true, 'Request must belong to a team'],
+    }
+     * ]
+     */
     team: {
       type: mongoose.Schema.ObjectId,
       ref: 'TeamLeader',
@@ -76,7 +84,7 @@ teamRequestSchema.pre('save', async function (next) {
   next();
 });
 
-// Update user role and team when request is accepted
+// Update user role and teams when request is accepted
 teamRequestSchema.pre('save', async function (next) {
   if (this.isModified('status')) {
     this.responseDate = Date.now();
@@ -87,9 +95,9 @@ teamRequestSchema.pre('save', async function (next) {
         throw new Error('User not found');
       }
 
-      // تحديث دور المستخدم وفريقه
+      // تحديث دور المستخدم وإضافة الفريق إلى مصفوفة الفرق
       user.role = 'team_member';
-      user.team = this.team;
+      user.teams.push(this.team);
       await user.save();
 
       // تحديث قائمة أعضاء الفريق
@@ -110,7 +118,6 @@ teamRequestSchema.statics.canUserApply = async function (userId, teamId) {
   });
   return !existingRequest;
 };
-
 
 const TeamRequest = mongoose.model('TeamRequest', teamRequestSchema);
 export default TeamRequest;

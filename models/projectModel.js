@@ -43,6 +43,27 @@ const projectSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'TeamLeader',
     },
+    teamRequests: [
+      {
+        team: {
+          type: mongoose.Schema.ObjectId,
+          ref: 'TeamLeader',
+          required: true,
+        },
+        status: {
+          type: String,
+          enum: ['pending', 'accepted', 'rejected'],
+          default: 'pending',
+        },
+        requestDate: {
+          type: Date,
+          default: Date.now,
+        },
+        responseDate: {
+          type: Date,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
@@ -53,12 +74,27 @@ const projectSchema = new mongoose.Schema(
 projectSchema.index({ client: 1, status: 1 });
 projectSchema.index({ category: 1 });
 
-// Virtual populate for team requests
-projectSchema.virtual('teamRequests', {
-  ref: 'TeamProjectRequest',
-  localField: '_id',
-  foreignField: 'project',
+// Pre-save middleware to handle request status changes
+projectSchema.pre('save', function (next) {
+  // Check if any team request status has changed
+  this.teamRequests.forEach(request => {
+    if (request.isModified('status')) {
+      request.responseDate = Date.now();
+    }
+  });
+
+  // If project has an assigned team, ensure it's set correctly
+  if (this.status === 'in-progress' && !this.assignedTeam) {
+    throw new Error('Project cannot be in progress without an assigned team');
+  }
+  next();
 });
+
+// // Static method to check for duplicate projects with same client and title
+// projectSchema.statics.isDuplicateProject = async function (clientId, title) {
+//   const existingProject = await this.findOne({ client: clientId, title });
+//   return !!existingProject;
+// };
 
 const Project = mongoose.model('Project', projectSchema);
 export default Project;

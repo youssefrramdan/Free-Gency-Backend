@@ -17,7 +17,11 @@ process.on('unhandledRejection', err => {
   });
 });
 
+
 // Handle errors that happen synchronously outside Express
+// For example, if an error occurs before Express starts,
+//  it won't be caught by Express error handling middleware.
+
 process.on('uncaughtException', err => {
   console.error(`Uncaught Exception: ${err.name} | ${err.message}`);
   process.exit(1);

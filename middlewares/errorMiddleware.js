@@ -26,16 +26,16 @@ const handleValidationErrorDB = err => {
 /**
  * Error Response Handlers
  */
-const sendErrorDev = (err, res) =>
-  res.status(err.statusCode).json({
+const sendErrorForDev = (err, res) =>
+  res.status(400).json({
     status: err.status,
-    error: err,
+    Error: err,
     message: err.message,
     stack: err.stack,
   });
 
-const sendErrorProd = (err, res) =>
-  res.status(err.statusCode).json({
+const sendErrorForProd = (err, res) =>
+  res.status(400).json({
     status: err.status,
     message: err.message,
   });
@@ -45,35 +45,17 @@ const sendErrorProd = (err, res) =>
  * Handles all errors in the application
  */
 const globalError = (err, req, res, next) => {
-  // Set default error status and code
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
-  // Clone error object
-  let error = { ...err };
-  // Handle JWT Authentication Errors
-  if (error.name === 'JsonWebTokenError') {
-    error = handleJwtInvalidSignature();
-  }
+  if (err.name === 'ValidationError') err = handleValidationErrorDB(err);
+  if (err.name === 'JsonWebTokenError') err = handleJwtInvalidSignature();
+  if (err.name === 'TokenExpiredError') err = handleJwtExpired();
+  if (err.code === 11000) err = handleDuplicateFieldsDB(err);
 
-  if (error.name === 'TokenExpiredError') {
-    error = handleJwtExpired();
-  }
-
-  // Handle Mongoose Validation Errors
-  if (error.name === 'ValidationError') {
-    error = handleValidationErrorDB(error);
-  }
-
-  // Handle MongoDB Duplicate Field Errors
-  if (error.code === 11000) {
-    error = handleDuplicateFieldsDB(error);
-  }
-
-  // Send appropriate response based on environment
   if (process.env.NODE_ENV === 'development') {
-    sendErrorDev(error, res);
+    sendErrorForDev(err, res);
   } else {
-    sendErrorProd(error, res);
+    sendErrorForProd(err, res);
   }
 };
 

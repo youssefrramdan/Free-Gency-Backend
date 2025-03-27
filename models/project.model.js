@@ -2,41 +2,24 @@ import mongoose from 'mongoose';
 
 const projectSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: [true, 'Project title is required'],
-      trim: true,
-    },
-    description: {
-      type: String,
-      required: [true, 'Project description is required'],
-    },
     category: {
       type: mongoose.Schema.ObjectId,
       ref: 'Category',
-      required: [true, 'Project category is required'],
     },
     service: {
       type: mongoose.Schema.ObjectId,
       ref: 'Service',
-      required: [true, 'Project service is required'],
     },
     budget: {
       type: Number,
-      required: [true, 'Project budget is required'],
     },
-    requiredSkills: {
-      type: [String],
-      required: [true, 'Required skills are required'],
-    },
+    requiredSkills: [String],
     deadline: {
       type: Date,
-      required: [true, 'Project deadline is required'],
     },
     client: {
       type: mongoose.Schema.ObjectId,
       ref: 'User',
-      required: [true, 'Project must belong to a client'],
     },
     status: {
       type: String,
@@ -52,7 +35,6 @@ const projectSchema = new mongoose.Schema(
         team: {
           type: mongoose.Schema.ObjectId,
           ref: 'Team',
-          required: true,
         },
         status: {
           type: String,
@@ -68,7 +50,7 @@ const projectSchema = new mongoose.Schema(
         },
       },
     ],
-    projectFiles: [
+    projectDetails: [
       {
         fileName: String,
         fileUrl: String,
@@ -79,13 +61,9 @@ const projectSchema = new mongoose.Schema(
         description: String,
       },
     ],
-    milestones: [
+    projectHistory: [
       {
-        title: {
-          type: String,
-          required: true,
-        },
-        description: String,
+        note :String,
         dueDate: Date,
         status: {
           type: String,
@@ -108,7 +86,6 @@ projectSchema.index({ client: 1, status: 1 });
 projectSchema.index({ category: 1 });
 projectSchema.index({ assignedTeam: 1 });
 projectSchema.index({ 'teamRequests.team': 1, 'teamRequests.status': 1 });
-
 
 // Pre-save middleware to handle request status changes
 projectSchema.pre('save', function (next) {
@@ -167,19 +144,8 @@ projectSchema.methods.assignTeam = function (teamId) {
 
   return this.save();
 };
-
-// Static method to get projects by team
-projectSchema.statics.getTeamProjects = function (teamId) {
-  return this.find({ assignedTeam: teamId })
-    .populate('category service client')
-    .sort({ createdAt: -1 });
-};
-
-// Static method to check for duplicate projects with same client and title
-projectSchema.statics.isDuplicateProject = async function (clientId, title) {
-  const existingProject = await this.findOne({ client: clientId, title });
-  return !!existingProject;
-};
+// TODO : check for duplicate projects with same client and title
+// TODO : method to get projects by team
 
 const Project = mongoose.model('Project', projectSchema);
 export default Project;

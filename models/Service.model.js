@@ -34,20 +34,6 @@ const serviceSchema = new mongoose.Schema(
   }
 );
 
-// Virtual populate for projects
-serviceSchema.virtual('projects', {
-  ref: 'Project',
-  foreignField: 'service',
-  localField: '_id',
-});
-
-// Get projects count
-serviceSchema.virtual('projectsCount', {
-  ref: 'Project',
-  foreignField: 'service',
-  localField: '_id',
-  count: true,
-});
 
 // Middleware to ensure service belongs to a valid category
 serviceSchema.pre('save', async function (next) {
@@ -65,14 +51,6 @@ serviceSchema.pre('save', async function (next) {
   }
 });
 
-// Static method to get all services by category
-serviceSchema.statics.getServicesByCategory = function (categoryId) {
-  return this.find({ category: categoryId, status: 'active' }).sort({
-    name: 1,
-  });
-};
-
-// Indexes
 serviceSchema.index({ name: 1 });
 serviceSchema.index({ category: 1 });
 serviceSchema.index({ status: 1 });

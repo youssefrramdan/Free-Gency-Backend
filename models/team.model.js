@@ -2,27 +2,19 @@ import mongoose from 'mongoose';
 
 const teamSchema = new mongoose.Schema(
   {
-    // معرف قائد الفريق
     teamLeader: {
       type: mongoose.Schema.ObjectId,
       ref: 'User',
       required: [true, 'Team must have a leader'],
     },
-
-    // اسم الفريق
     name: {
       type: String,
-      required: [true, 'Team name is required'],
       unique: true,
       trim: true,
-      minlength: [3, 'Team name must be at least 3 characters'],
-      maxlength: [50, 'Team name cannot exceed 50 characters'],
     },
 
-    // كود الفريق الفريد
     teamCode: {
       type: String,
-      required: [true, 'Team code is required'],
       unique: true,
       uppercase: true,
     },
@@ -33,8 +25,6 @@ const teamSchema = new mongoose.Schema(
       ref: 'Category',
       required: [true, 'Team must belong to a category'],
     },
-
-    // أعضاء الفريق
     members: [
       {
         user: {
@@ -43,7 +33,7 @@ const teamSchema = new mongoose.Schema(
         },
         role: {
           type: String,
-          enum: ['member', 'lead', 'admin'],
+          enum: ['member', 'Teamleader'],
           default: 'member',
         },
         joinedAt: {
@@ -53,40 +43,58 @@ const teamSchema = new mongoose.Schema(
       },
     ],
     aboutUs: {
-        type: String,
-        minlength: [100, 'About us must be at least 100 characters'],
-        maxlength: [2000, 'About us cannot exceed 2000 characters'],
+      type: String,
+      minlength: [100, 'About us must be at least 100 characters'],
+      maxlength: [2000, 'About us cannot exceed 2000 characters'],
+    },
+    // طلبات الانضمام
+    joinRequests: [
+      {
+        user: {
+          type: mongoose.Schema.ObjectId,
+          ref: 'User',
+          required: [true, 'User is required'],
+        },
+        requestedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        status: {
+          type: String,
+          enum: ['pending', 'accepted', 'rejected'],
+          default: 'pending',
+        },
       },
-      projects: [
-        {
-          project: {
-            type: mongoose.Schema.ObjectId,
-            ref: 'Project',
-          },
-          status: {
-            type: String,
-            enum: ['active', 'completed'],
-            default: 'active',
-          },
-          completionDate: Date,
-        },
-      ],
-      lastedProjects: [
-        {
-          title: {
-            type: String,
-            required: true,
-          },
-          budget: String,
-          description: String,
-          images: [String],
-          projectUrl: String,
-          technologies: [String],
-          completionDate: Date,
-        },
-      ],
+    ],
 
-    // تقييم الفريق
+    projects: [
+      {
+        project: {
+          type: mongoose.Schema.ObjectId,
+          ref: 'Project',
+        },
+        status: {
+          type: String,
+          enum: ['active', 'completed'],
+          default: 'active',
+        },
+        completionDate: Date,
+      },
+    ],
+    lastedProjects: [
+      {
+        title: {
+          type: String,
+          required: true,
+        },
+        budget: String,
+        description: String,
+        images: [String],
+        projectUrl: String,
+        technologies: [String],
+        completionDate: Date,
+      },
+    ],
     rating: {
       average: {
         type: Number,
@@ -99,25 +107,18 @@ const teamSchema = new mongoose.Schema(
         default: 0,
       },
     },
-
-    // حالة الفريق
     status: {
       type: String,
       enum: ['active', 'inactive', 'recruiting'],
       default: 'active',
     },
-
-    // معلومات التواصل
     contactInfo: {
       email: String,
       phone: String,
       website: String,
     },
-
-    // الشعار أو الصورة
     logo: String,
 
-    // تاريخ التأسيس
     foundedAt: {
       type: Date,
       default: Date.now,
@@ -129,10 +130,12 @@ const teamSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
-
-// Virtual للحصول على عدد الأعضاء
-teamSchema.virtual('memberCount').get(function () {
-  return this.members.length;
+// Middleware للتحقق من صحة كود الفريق
+teamSchema.pre('save', function (next) {
+  if (this.teamCode) {
+    this.teamCode = this.teamCode.toUpperCase().replace(/\s/g, '');
+  }
+  next();
 });
 
 // Virtual للمشاريع النشطة
@@ -143,18 +146,52 @@ teamSchema.virtual('activeProjects', {
   match: { status: 'active' },
 });
 
-// Method للتحقق من وجود عضو في الفريق
-teamSchema.methods.hasMember = function (userId) {
-  return this.members.some(member => member.user.equals(userId));
+// Method to accept a join request and add team to user
+teamSchema.methods.acceptJoinRequest = async function (
+  requestId,
+  teamLeaderId
+) {
+  const request = await mongoose.model('JoinRequest').findById(requestId);
+
+  if (
+    !request ||
+    request.status !== 'pending' ||
+    !request.team.equals(this._id)
+  ) {
+    throw new Error('Invalid request');
+  }
+
+  request.status = 'accepted';
+  request.responseAt = Date.now();
+  request.responseBy = teamLeaderId;
+  await request.save();
+
+  // Add the team to the user after accepting the request
+  const user = await mongoose.model('User').findById(request.user);
+
+  this.members.push({
+    user: request.user,
+    role: 'member',
+    joinedAt: Date.now(),
+  });
+
+  await this.save();
+  // Add the team to the user
+  user.teams.push(this._id);
+  await user.save();
 };
 
-// Middleware للتحقق من صحة كود الفريق
-teamSchema.pre('save', function (next) {
-  if (this.teamCode) {
-    this.teamCode = this.teamCode.toUpperCase().replace(/\s/g, '');
+// Method to reject a join request
+teamSchema.methods.rejectJoinRequest = async function (requestId) {
+  const request = this.joinRequests.id(requestId);
+
+  if (!request || request.status !== 'pending') {
+    throw new Error('Invalid request');
   }
-  next();
-});
+
+  request.status = 'rejected';
+  await this.save();
+};
 
 // Indexes للأداء الأفضل
 teamSchema.index({ teamLeader: 1 });

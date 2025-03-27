@@ -6,7 +6,7 @@ import morgan from 'morgan';
 import compression from 'compression';
 import globalError from './middlewares/errorMiddleware.js';
 import ApiError from './utils/apiError.js';
-import teamLeaderRouter from './routes/teamLeader.routes.js';
+import userRouter from './routes/user.routes.js';
 
 dotenv.config({ path: './config/config.env' });
 
@@ -30,7 +30,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 //mount Routes
-app.use('/api/v1/team-leaders', teamLeaderRouter);
+app.use('/api/v1/users', userRouter);
 // Handle undefined routes
 app.all('*', (req, res, next) => {
   next(new ApiError(`Can't find ${req.originalUrl} on this server!`, 400));

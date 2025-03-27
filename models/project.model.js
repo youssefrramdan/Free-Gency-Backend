@@ -30,6 +30,7 @@ const projectSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Team',
     },
+    // Requests from teams to join the project
     teamRequests: [
       {
         team: {
@@ -63,7 +64,7 @@ const projectSchema = new mongoose.Schema(
     ],
     projectHistory: [
       {
-        note :String,
+        note: String,
         dueDate: Date,
         status: {
           type: String,
@@ -81,7 +82,7 @@ const projectSchema = new mongoose.Schema(
   }
 );
 
-// Indexes
+// Indexes for performance
 projectSchema.index({ client: 1, status: 1 });
 projectSchema.index({ category: 1 });
 projectSchema.index({ assignedTeam: 1 });
@@ -89,25 +90,25 @@ projectSchema.index({ 'teamRequests.team': 1, 'teamRequests.status': 1 });
 
 // Pre-save middleware to handle request status changes
 projectSchema.pre('save', function (next) {
-  // Check if any team request status has changed
+  // Update response date when request status changes
   this.teamRequests.forEach(request => {
     if (request.isModified && request.isModified('status')) {
       request.responseDate = Date.now();
     }
   });
 
-  // If project has an assigned team, ensure it's set correctly
+  // Ensure assigned team is set if project is in progress
   if (this.status === 'in-progress' && !this.assignedTeam) {
     throw new Error('Project cannot be in progress without an assigned team');
   }
 
-  // When project is completed, set completion date for milestones if not already set
+  // If project is completed, update project history
   if (this.isModified('status') && this.status === 'completed') {
     const now = Date.now();
-    this.milestones.forEach(milestone => {
-      if (milestone.status !== 'completed') {
-        milestone.status = 'completed';
-        milestone.completedAt = now;
+    this.projectHistory.forEach(history => {
+      if (history.status !== 'completed') {
+        history.status = 'completed';
+        history.completedAt = now;
       }
     });
   }
@@ -115,9 +116,9 @@ projectSchema.pre('save', function (next) {
   next();
 });
 
-// Method to assign team to project
-projectSchema.methods.assignTeam = function (teamId) {
-  // Find team request
+// Method to assign a team to a project
+projectSchema.methods.assignTeam = async function (teamId) {
+  // Check if the team has requested to join the project
   const teamRequest = this.teamRequests.find(
     request => request.team.equals(teamId) && request.status === 'pending'
   );
@@ -126,15 +127,13 @@ projectSchema.methods.assignTeam = function (teamId) {
     throw new Error('Team has not requested to work on this project');
   }
 
-  // Update request status
+  // Accept the team request and assign the team to the project
   teamRequest.status = 'accepted';
   teamRequest.responseDate = Date.now();
-
-  // Assign team
   this.assignedTeam = teamId;
   this.status = 'in-progress';
-
-  // Reject all other requests
+  
+  // Reject all other pending requests
   this.teamRequests.forEach(request => {
     if (!request.team.equals(teamId) && request.status === 'pending') {
       request.status = 'rejected';
@@ -144,25 +143,28 @@ projectSchema.methods.assignTeam = function (teamId) {
 
   return this.save();
 };
-// TODO : check for duplicate projects with same client and title
-// TODO : method to get projects by team
+
+// Method to reject a team request
+projectSchema.methods.rejectTeamRequest = async function (teamId) {
+  const teamRequest = this.teamRequests.find(
+    request => request.team.equals(teamId) && request.status === 'pending'
+  );
+
+  if (!teamRequest) {
+    throw new Error('Team has not requested to work on this project');
+  }
+
+  // Reject the team request
+  teamRequest.status = 'rejected';
+  teamRequest.responseDate = Date.now();
+
+  return this.save();
+};
+
+// Method to get all projects by a team
+projectSchema.statics.getProjectsByTeam = function (teamId) {
+  return this.find({ 'teamRequests.team': teamId });
+};
 
 const Project = mongoose.model('Project', projectSchema);
 export default Project;
-
-// auth --->
-// team join requsets --->
-
-// (join to team , get my requests , cancel requset) ---> team member
-// (team leader )---> get all requests for my team ,update request status
-
-// Category ,
-// services ---> routes , nested routes ---> Admin
-// ----> add category , update category , delete category , get all categories
-// ----> add services , update services , delete services , get all services
-// ----->categories/679cd051b3d57c82419965e1/services-----> create service on category
-// ------>/categories/6797aae437c53affcd567ec3/subcategories ----> Get list of services for specific category
-// project
-// post project , update project , delete project
-// view requests for project (applies)---> client
-//

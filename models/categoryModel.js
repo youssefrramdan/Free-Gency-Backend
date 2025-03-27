@@ -22,12 +22,6 @@ const categorySchema = new mongoose.Schema(
         ref: 'TeamLeader',
       },
     ],
-    projects: [
-      {
-        type: mongoose.Schema.ObjectId,
-        ref: 'Project',
-      },
-    ],
   },
   {
     timestamps: true,
@@ -41,14 +35,10 @@ categorySchema.virtual('teamsCount').get(function () {
   return this.teams.length;
 });
 
-categorySchema.virtual('projectsCount').get(function () {
-  return this.projects.length;
-});
 
 // Indexes
 categorySchema.index({ name: 1 });
 categorySchema.index({ teams: 1 });
-categorySchema.index({ projects: 1 });
 
 const Category = mongoose.model('Category', categorySchema);
 export default Category;

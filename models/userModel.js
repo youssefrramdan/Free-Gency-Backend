@@ -21,7 +21,6 @@ const userSchema = new mongoose.Schema(
     },
     profileImage: {
       type: String,
-      default: 'default-user.png',
     },
     role: {
       type: String,
@@ -46,14 +45,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    verificationCode: String,
-    verificationCodeExpires: Date,
-    passwordResetCode: String,
     passwordResetExpires: Date,
-    active: {
-      type: Boolean,
-      default: true,
-    },
+    passwordResetCode: String,
+    passwordResetVerified: Boolean,
+    passwordChangedAt: Date,
   },
   {
     timestamps: true,

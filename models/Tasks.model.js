@@ -1,5 +1,11 @@
 import mongoose from 'mongoose';
 
+// endpoints ---> get all tasks for specific team member
+// endpoint ---> get all tasks for project for team leader
+// endpoint ---> post task for specific team member
+// endpoint ----> update task status for team member ---> body {status = ""}
+// endpoint ----> delete task for team member  --->(team leader)
+
 const taskSchema = new mongoose.Schema(
   {
     title: {
@@ -23,21 +29,16 @@ const taskSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'in-progress', 'completed'],
+      enum: ['pending','completed'],
       default: 'pending',
     },
     startDate: {
       type: Date,
       required: [true, 'Start date is required'],
     },
-    dueDate: {
+    deadLine: {
       type: Date,
       required: [true, 'Due date is required'],
-    },
-    priority: {
-      type: String,
-      enum: ['low', 'medium', 'high'],
-      default: 'medium',
     },
     comments: [
       {
@@ -74,7 +75,6 @@ taskSchema.post('save', async function () {
 
   // Check if all tasks are completed
   const completedTasks = tasks.filter(task => task.status === 'completed');
-
   if (completedTasks.length === tasks.length) {
     project.status = 'completed';
     await project.save();
@@ -83,7 +83,6 @@ taskSchema.post('save', async function () {
 
 const Task = mongoose.model('Task', taskSchema);
 export default Task;
-
 
 // const task = new Task({
 //     title: 'Design homepage',
@@ -96,14 +95,10 @@ export default Task;
 //   });
 //   await task.save();
 
-
-
 // task.status = 'completed';
 // await task.save();
 
 // إضافة تعليق إلى المهمة: لإضافة تعليق إلى المهمة من Team Leader أو Team Member:
-
-
 
 // task.comments.push({
 //     user: userId,  // UserId of the person adding the comment

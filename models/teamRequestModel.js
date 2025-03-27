@@ -7,14 +7,6 @@ const teamRequestSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Request must belong to a user'],
     },
-    /**
-     * team [ {
-      type: mongoose.Schema.ObjectId,
-      ref: 'TeamLeader',
-      required: [true, 'Request must belong to a team'],
-    }
-     * ]
-     */
     team: {
       type: mongoose.Schema.ObjectId,
       ref: 'TeamLeader',
@@ -100,10 +92,10 @@ teamRequestSchema.pre('save', async function (next) {
       user.teams.push(this.team);
       await user.save();
 
-      // تحديث قائمة أعضاء الفريق
-      await mongoose
-        .model('TeamLeader')
-        .findByIdAndUpdate(this.team, { $addToSet: { members: this.user } });
+    //   // تحديث قائمة أعضاء الفريق
+    //   await mongoose
+    //     .model('TeamLeader')
+    //     .findByIdAndUpdate(this.team, { $addToSet: { members: this.user } });
     }
   }
   next();

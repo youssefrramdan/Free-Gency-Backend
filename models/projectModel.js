@@ -16,6 +16,11 @@ const projectSchema = new mongoose.Schema(
       ref: 'Category',
       required: [true, 'Project category is required'],
     },
+    service: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Service',
+      required: [true, 'Project service is required'],
+    },
     budget: {
       type: Number,
       required: [true, 'Project budget is required'],
@@ -98,3 +103,20 @@ projectSchema.pre('save', function (next) {
 
 const Project = mongoose.model('Project', projectSchema);
 export default Project;
+
+// auth --->
+// team join requsets --->
+
+// (join to team , get my requests , cancel requset) ---> team member
+// (team leader )---> get all requests for my team ,update request status
+
+// Category ,
+// services ---> routes , nested routes ---> Admin
+// ----> add category , update category , delete category , get all categories
+// ----> add services , update services , delete services , get all services
+// ----->categories/679cd051b3d57c82419965e1/services-----> create service on category
+// ------>/categories/6797aae437c53affcd567ec3/subcategories ----> Get list of services for specific category
+// project
+// post project , update project , delete project
+// view requests for project (applies)---> client
+//

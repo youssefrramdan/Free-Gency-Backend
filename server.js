@@ -1,11 +1,15 @@
 import app from './app.js';
 import databaseConnection from './config/dbConnection.js';
+import initScheduledTasks from './utils/scheduler.js';
 
 databaseConnection();
 const PORT = process.env.PORT || 8000;
 
 const server = app.listen(PORT, () => {
   console.log(`server is running ${PORT} ....`);
+
+  // Initialize scheduled tasks after server starts
+  initScheduledTasks();
 });
 
 // Handle errors that occur within promises but weren't caught
@@ -16,7 +20,6 @@ process.on('unhandledRejection', err => {
     process.exit(1);
   });
 });
-
 
 // Handle errors that happen synchronously outside Express
 // For example, if an error occurs before Express starts,

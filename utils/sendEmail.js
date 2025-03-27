@@ -7,23 +7,31 @@ import nodemailer from 'nodemailer';
  * @param   {string} type - Type of email ('otp' or 'verification')
  * @param   {string} [code] - OTP code if type is 'otp'
  */
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
 const sendEmail = async options => {
-  const info = await transporter.sendMail({
-    from: `"Free-Gency" <${process.env.EMAIL_USER}>`,
-    to: options.email,
-    subject: options.subject,
-    html: options.html,
-  });
+  try {
+    // Create transporter
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-  console.log('Message sent: %s', info.messageId);
+    // Send email
+    const info = await transporter.sendMail({
+      from: `"Free-Gency" <${process.env.EMAIL_USER}>`,
+      to: options.email,
+      subject: options.subject,
+      html: options.html,
+    });
+
+    console.log('Message sent: %s', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    throw error;
+  }
 };
 
 export default sendEmail;

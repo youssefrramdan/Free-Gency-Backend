@@ -8,10 +8,6 @@ const serviceSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    description: {
-      type: String,
-      trim: true,
-    },
     category: {
       type: mongoose.Schema.ObjectId,
       ref: 'Category',
@@ -20,11 +16,6 @@ const serviceSchema = new mongoose.Schema(
     image: {
       type: String,
       default: 'default-service.png',
-    },
-    status: {
-      type: String,
-      enum: ['active', 'inactive'],
-      default: 'active',
     },
   },
   {

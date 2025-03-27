@@ -33,7 +33,7 @@ const teamSchema = new mongoose.Schema(
         },
         role: {
           type: String,
-          enum: ['member', 'Teamleader'],
+          enum: ['member', 'Team_leader'],
           default: 'member',
         },
         joinedAt: {

@@ -1,0 +1,313 @@
+{
+  "info": {
+    "_postman_id": "8bec1b05-9ea9-40e2-b9bf-e38f5ef1e5e1",
+    "name": "Team Leader API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "34651419",
+    "_collection_link": "https://gradutrion-team.postman.co/workspace/Free-Gancy-API~13a47391-c795-4844-ace8-fa92c549ef68/collection/34651419-8bec1b05-9ea9-40e2-b9bf-e38f5ef1e5e1?action=share&source=collection_link&creator=34651419"
+  },
+  "item": [
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get All Users",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/api/v1/users",
+              "host": ["{{URL}}"],
+              "path": ["api", "v1", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\"name\": \"youssef\",\n\"email\":\"rmdanyoussef@gmail.com\",\n\"password\":\"12344455551\",\n\"role\":\"client\"\n}"
+            },
+            "url": {
+              "raw": "{{URL}}/api/v1/users",
+              "host": ["{{URL}}"],
+              "path": ["api", "v1", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Specific User",
+          "request": {
+            "auth": {
+              "type": "bearer"
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"teamLeaderName\": \"Updated Team Leader\",\n    \"email\": \"updated@test.com\",\n    \"phoneNumber\" : \"01020232312312\"\n    \n\n}"
+            },
+            "url": {
+              "raw": "{{URL}}/api/v1/team-leaders/67e146f5acb1af5fa571b358",
+              "host": ["{{URL}}"],
+              "path": ["api", "v1", "team-leaders", "67e146f5acb1af5fa571b358"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Specific  User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/api/v1/users/67e6b0dda7ba8b66b7f8f291",
+              "host": ["{{URL}}"],
+              "path": ["api", "v1", "users", "67e6b0dda7ba8b66b7f8f291"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\" : \"youssef\",\r\n    \"email\" : \"rmdanyoussef2@gmail.com\",\r\n    \"password\":\"123456789\",\r\n    \"confirmPassword\" : \"123456789\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/api/v1/auth/signup",
+              "host": ["{{URL}}"],
+              "path": ["api", "v1", "auth", "signup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Signup with Team",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\" : \"Team Leader\",\r\n    \"email\" : \"leader@example.com\",\r\n    \"password\" : \"12345678\",\r\n    \"confirmPassword\" : \"12345678\",\r\n    \"role\" : \"team_leader\",\r\n    \"teamName\" : \"Dream Team\",\r\n    \"category\" : \"Web Development\",\r\n    \"teamCode\" : \"1234567890123456\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/api/v1/auth/signup-team",
+              "host": ["{{URL}}"],
+              "path": ["api", "v1", "auth", "signup-team"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\" : \"rmdanyoussef01@gmail.com\",\r\n    \"password\":\"123456789\"\r\n}   ",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/api/v1/auth/login",
+              "host": ["{{URL}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resend Verification Email",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\" : \"rmdanyoussef2@gmail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/api/v1/auth/resend-email",
+              "host": ["{{URL}}"],
+              "path": ["api", "v1", "auth", "resend-email"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/api/v1/auth/verify/:token",
+              "host": ["{{URL}}"],
+              "path": ["api", "v1", "auth", "verify", ":token"],
+              "variable": [
+                {
+                  "key": "token",
+                  "value": "YOUR_VERIFICATION_TOKEN",
+                  "description": "JWT token received in email"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Password Reset",
+      "item": [
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"rmdanyoussef2@gmail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/api/v1/auth/forgot-password",
+              "host": ["{{URL}}"],
+              "path": ["api", "v1", "auth", "forgot-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Reset Code",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"resetCode\": \"123456\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/api/v1/auth/verify-reset-code",
+              "host": ["{{URL}}"],
+              "path": ["api", "v1", "auth", "verify-reset-code"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"rmdanyoussef2@gmail.com\",\r\n    \"newPassword\": \"newpassword123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/api/v1/auth/reset-password",
+              "host": ["{{URL}}"],
+              "path": ["api", "v1", "auth", "reset-password"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [""]
+      }
+    }
+  ]
+}

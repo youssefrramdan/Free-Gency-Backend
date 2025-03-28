@@ -84,6 +84,7 @@ const projectSchema = new mongoose.Schema(
     }
   );
 
+
   // Indexes for performance
   projectSchema.index({ client: 1, status: 1 });
   projectSchema.index({ category: 1 });

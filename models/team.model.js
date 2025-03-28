@@ -12,14 +12,11 @@ const teamSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-
     teamCode: {
       type: String,
       unique: true,
       uppercase: true,
     },
-
-    // الفئة أو المجال
     category: {
       type: mongoose.Schema.ObjectId,
       ref: 'Category',

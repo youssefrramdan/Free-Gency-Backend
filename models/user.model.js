@@ -10,14 +10,10 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: [true, 'Email is required'],
-      unique: true,
       lowercase: true,
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
-      minlength: [8, 'Password must be at least 8 characters long'],
       select: false,
     },
     profileImage: {
@@ -42,20 +38,18 @@ const userSchema = new mongoose.Schema(
         ref: 'Team',
       },
     ],
-    profile: {
-      skills: [String],
-      interests: [
-        {
-          type: mongoose.Schema.ObjectId,
-          ref: 'Category',
-        },
-      ],
-      bio: {
-        type: String,
-        maxlength: [500, 'Bio cannot exceed 500 characters'],
+    skills: [String],
+    interests: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Category',
       },
+    ],
+    bio: {
+      type: String,
+      maxlength: [500, 'Bio cannot exceed 500 characters'],
     },
-    verified: {
+    isVerified: {
       type: Boolean,
       default: false,
     },
@@ -80,10 +74,12 @@ userSchema.pre('save', async function (next) {
 
 // Compare password method - essential utility method kept in schema
 userSchema.methods.comparePassword = async function (candidatePassword) {
+  // إذا كانت كلمة المرور غير متاحة (بسبب select: false)
+  if (!this.password) {
+    throw new Error('Password not loaded for comparison');
+  }
   return await bcrypt.compare(candidatePassword, this.password);
 };
-
-
 
 // Ensure team leaders always have 'team_leader' role
 userSchema.pre('save', function (next) {

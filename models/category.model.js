@@ -8,13 +8,8 @@ const categorySchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    description: {
-      type: String,
-      trim: true,
-    },
     image: {
       type: String,
-      default: 'default-category.png',
     },
   },
   {
@@ -23,7 +18,7 @@ const categorySchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
-
+// virtual for services in category
 // Indexes
 categorySchema.index({ name: 1 });
 categorySchema.index({ teams: 1 });
@@ -31,3 +26,10 @@ categorySchema.index({ status: 1 });
 
 const Category = mongoose.model('Category', categorySchema);
 export default Category;
+
+//endpoints
+// ----> teams assigned in this category -sort = rating
+// ----> projects assigned in this category
+
+//endpoints
+//

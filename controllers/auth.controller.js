@@ -49,24 +49,20 @@ const signup = asyncHandler(async (req, res, next) => {
  * @access  Public
  */
 const signupAndCreateTeam = asyncHandler(async (req, res, next) => {
-  const { email, role } = req.body;
-  if (role !== 'team_leader') {
-    return next(new ApiError('only Team leaders allowed to sign here', 400));
-  }
-  const existingUser = await User.findOne({ email });
-
-  if (existingUser) {
-    return next(new ApiError('Email is already in use', 400));
-  }
-  const user = await User.create(req.body);
+  const { name, email, password, teamName, category, teamCode } = req.body;
+  const user = await User.create({
+    name,
+    email,
+    password,
+  });
   const team = await Team.create({
     teamLeader: user._id,
-    name: req.body.teamName,
-    category: req.body.category,
-    teamCode: req.body.teamCode,
+    name: teamName,
+    category,
+    teamCode,
   });
 
-  user.createdTeams.push(team._id);
+  user.createdTeam = team._id;
   await user.save();
 
   const token = generateToken(user._id);

@@ -18,26 +18,22 @@ const userSchema = new mongoose.Schema(
     },
     profileImage: {
       type: String,
-      default: 'default-avatar.png',
     },
     role: {
       type: String,
       enum: ['client', 'team_member', 'team_leader'],
       default: 'client',
     },
-    // الفرق التي انضم إليها المستخدم فقط بعد الموافقة
     teams: [
       {
         type: mongoose.Schema.ObjectId,
         ref: 'Team',
       },
     ],
-    createdTeams: [
-      {
-        type: mongoose.Schema.ObjectId,
-        ref: 'Team',
-      },
-    ],
+    createdTeam: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Team',
+    },
     skills: [String],
     interests: [
       {
@@ -83,11 +79,7 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 // Ensure team leaders always have 'team_leader' role
 userSchema.pre('save', function (next) {
-  if (
-    this.createdTeams &&
-    this.createdTeams.length > 0 &&
-    this.role !== 'team_leader'
-  ) {
+  if (this.createdTeam && this.role !== 'team_leader') {
     this.role = 'team_leader';
   }
   next();
@@ -95,7 +87,7 @@ userSchema.pre('save', function (next) {
 
 // Indexes for performance
 userSchema.index({ email: 1 });
-userSchema.index({ createdTeams: 1 });
+userSchema.index({ createdTeam: 1 });
 userSchema.index({ role: 1 });
 
 const User = mongoose.model('User', userSchema);

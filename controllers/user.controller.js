@@ -94,17 +94,60 @@ const deleteUser = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({ message: 'success', user: user });
 });
-// logged User Requests
+
+/**
+ * @desc    Get current logged in user
+ * @route   GET /api/v1/users/me
+ * @access  Private
+ */
 const getMe = asyncHandler(async (req, res, next) => {
-  if (!req.user || !req.user._id) {
-    return next(
-      new ApiError('User authentication failed. Please log in...', 404)
-    );
-  }
   const user = await User.findById(req.user._id);
   res.status(200).json({
     message: 'success',
     user,
   });
 });
-export { createUser, getAllUsers, getUser, updateUser, deleteUser };
+
+/**
+ * @desc    Update current logged in user
+ * @route   PUT /api/v1/users/me
+ * @access  Private
+ */
+const updateMe = asyncHandler(async (req, res, next) => {
+  const user = await User.findByIdAndUpdate(req.user._id, req.body, {
+    new: true,
+    runValidators: true,
+  }).select('-password -__v');
+
+  res.status(200).json({
+    message: 'success',
+    user,
+  });
+});
+
+const uploadUserImage = asyncHandler(async (req, res, next) => {
+  if (!req.file) {
+    return next(new ApiError('please upload imageCover', 404));
+  }
+  req.body.profileImage = req.file.path;
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { profileImage: req.body.profileImage },
+    { new: true, runValidators: true }
+  );
+  res.status(200).json({
+    message: 'success',
+    user,
+  });
+});
+
+export {
+  createUser,
+  getAllUsers,
+  getUser,
+  updateUser,
+  deleteUser,
+  getMe,
+  updateMe,
+  uploadUserImage,
+};

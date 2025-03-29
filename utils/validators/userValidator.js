@@ -114,9 +114,85 @@ const deleteUserValidator = [
   validatorMiddleware,
 ];
 
+/**
+ * @description  Validate Update Current User Profile
+ * @route        PUT /api/v1/users/me
+ * @access       Private
+ */
+const updateMeValidator = [
+  // منع تحديث كلمة المرور من هذا المسار
+  check('password')
+    .not()
+    .exists()
+    .withMessage(
+      'This route is not for password updates. Please use /changePassword instead'
+    ),
+
+  check('oldPassword')
+    .not()
+    .exists()
+    .withMessage(
+      'This route is not for password updates. Please use /changePassword instead'
+    ),
+
+  check('email')
+    .optional()
+    .isEmail()
+    .withMessage('Invalid email format')
+    .custom(
+      asyncHandler(async (val, { req }) => {
+        const existingUser = await User.findOne({ email: val });
+        if (
+          existingUser &&
+          existingUser._id.toString() !== req.user._id.toString()
+        ) {
+          throw new Error('Email already exists. Please use a different one.');
+        }
+        return true;
+      })
+    ),
+
+  check('name')
+    .optional()
+    .isLength({ min: 3 })
+    .withMessage('Name must be at least 3 characters'),
+
+  check('bio')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Bio cannot exceed 500 characters'),
+
+  validatorMiddleware,
+];
+
+const getMeValidator = [
+  check('user').custom((val, { req }) => {
+    if (!req.user || !req.user._id) {
+      throw new Error('User authentication failed. Please log in...');
+    }
+    return true;
+  }),
+  validatorMiddleware,
+];
+const uploadUserImageValidator = [
+  check('profileImage')
+    .notEmpty()
+    .withMessage('profileImage is required')
+    .custom((val, { req }) => {
+      if (!req.file) {
+        throw new Error('please upload profileImage');
+      }
+      return true;
+    }),
+  validatorMiddleware,
+];
+
 export {
   createUserValidator,
   getUserValidator,
   updateUserValidator,
   deleteUserValidator,
+  updateMeValidator,
+  getMeValidator,
+  uploadUserImageValidator,
 };

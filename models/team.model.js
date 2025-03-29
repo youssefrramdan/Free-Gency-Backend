@@ -9,7 +9,6 @@ const teamSchema = new mongoose.Schema(
     },
     name: {
       type: String,
-      unique: true,
       trim: true,
     },
     teamCode: {
@@ -20,7 +19,6 @@ const teamSchema = new mongoose.Schema(
     category: {
       type: mongoose.Schema.ObjectId,
       ref: 'Category',
-      required: [true, 'Team must belong to a category'],
     },
     members: [
       {

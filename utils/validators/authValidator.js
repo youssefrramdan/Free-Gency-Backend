@@ -186,7 +186,15 @@ const signupTeamValidator = [
     .notEmpty()
     .withMessage('Team name is required')
     .isLength({ min: 3, max: 50 })
-    .withMessage('Team name must be between 3 and 50 characters'),
+    .withMessage('Team name must be between 3 and 50 characters')
+    .custom(
+      asyncHandler(async (val, { req }) => {
+        const team = await Team.findOne({ name: val });
+        if (team) {
+          throw new Error('teamName already in use');
+        }
+      })
+    ),
 
   check('category').notEmpty().withMessage('Team category is required'),
 

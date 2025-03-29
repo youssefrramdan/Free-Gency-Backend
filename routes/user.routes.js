@@ -38,7 +38,6 @@ userRouter
   .route('/changePassword')
   .patch(protectedRoutes, changeMyPasswordValidator, changeMyPassword);
 
-// مسار تغيير كلمة المرور لمستخدم محدد بواسطة المشرف
 userRouter
   .route('/changePassword/:id')
   .patch(protectedRoutes, changeUserPasswordValidator, changeUserPassword);

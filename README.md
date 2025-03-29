@@ -110,6 +110,11 @@ JWT_EXPIRE_TIME=3d
 # Email Configuration
 EMAIL_USER=your_email@example.com
 EMAIL_PASS=your_email_password
+
+# Cloudinary Configuration
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
 ⚠ **Make sure not to share these credentials publicly and add `config/config.env` to `.gitignore`.**
@@ -145,17 +150,30 @@ The server will run at `http://localhost:8000`.
 
 ### **User Routes** (`/api/v1/users`)
 
-| Method   | Endpoint | Description                    |
-| -------- | -------- | ------------------------------ |
-| `GET`    | `/`      | Get all users                  |
-| `POST`   | `/`      | Create a new user (Admin only) |
-| `GET`    | `/:id`   | Get a specific user            |
-| `PUT`    | `/:id`   | Update a specific user         |
-| `DELETE` | `/:id`   | Delete a specific user         |
+| Method   | Endpoint                | Description                    |
+| -------- | ----------------------- | ------------------------------ |
+| `GET`    | `/`                     | Get all users                  |
+| `POST`   | `/`                     | Create a new user (Admin only) |
+| `GET`    | `/me`                   | Get current logged in user     |
+| `PUT`    | `/me`                   | Update current user profile    |
+| `GET`    | `/:id`                  | Get a specific user            |
+| `PUT`    | `/:id`                  | Update a specific user         |
+| `DELETE` | `/:id`                  | Delete a specific user         |
+| `PATCH`  | `/changePassword/:id`   | Change user password           |
+| `PATCH`  | `/upload-profile-image` | Update profile image           |
 
 ### **Teams Routes** (`/api/v1/teams`)
 
-Coming soon...
+| Method   | Endpoint                     | Description           |
+| -------- | ---------------------------- | --------------------- |
+| `POST`   | `/`                          | Create a new team     |
+| `GET`    | `/`                          | Get all teams         |
+| `GET`    | `/:id`                       | Get team by ID        |
+| `PUT`    | `/:id`                       | Update team           |
+| `DELETE` | `/:id`                       | Delete team           |
+| `POST`   | `/:id/join`                  | Request to join team  |
+| `PATCH`  | `/:id/accept-member/:userId` | Accept member request |
+| `PATCH`  | `/:id/reject-member/:userId` | Reject member request |
 
 ### **Projects Routes** (`/api/v1/projects`)
 

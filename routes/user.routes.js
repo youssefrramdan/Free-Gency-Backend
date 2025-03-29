@@ -27,19 +27,14 @@ const upload = createUploader('usersImages');
 userRouter.route('/').post(createUserValidator, createUser).get(getAllUsers);
 userRouter
   .route('/me')
-  .get(protectedRoutes, getMeValidator, getMe)
+  .patch(protectedRoutes, getMeValidator, getMe)
   .patch(protectedRoutes, updateMeValidator, updateMe);
 userRouter
   .route('/my-image')
   .patch(protectedRoutes, upload.single('profileImage'), uploadUserImage);
-
-userRouter.patch(
-  '/changePassword',
-  protectedRoutes,
-  changeMyPasswordValidator,
-  changeMyPassword
-);
-
+userRouter
+  .route('/changePassword')
+  .patch(protectedRoutes, changeMyPasswordValidator, changeMyPassword);
 userRouter
   .route('/:id')
   .get(getUserValidator, getUser)

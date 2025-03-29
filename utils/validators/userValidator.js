@@ -121,14 +121,19 @@ const deleteUserValidator = [
  */
 const updateMeValidator = [
   // منع تحديث كلمة المرور من هذا المسار
+  check('currentPassword')
+    .not()
+    .exists()
+    .withMessage(
+      'This route is not for password updates. Please use /changePassword instead'
+    ),
   check('password')
     .not()
     .exists()
     .withMessage(
       'This route is not for password updates. Please use /changePassword instead'
     ),
-
-  check('oldPassword')
+  check('passwordConfirm')
     .not()
     .exists()
     .withMessage(
@@ -216,6 +221,33 @@ const changeMyPasswordValidator = [
   validatorMiddleware,
 ];
 
+/**
+ * @description  Validate Change User Password by Admin
+ * @route        PATCH /api/v1/users/changePassword/:id
+ * @access       Private/Admin
+ */
+const changeUserPasswordValidator = [
+  check('id').isMongoId().withMessage('Invalid user ID format'),
+
+  check('password')
+    .notEmpty()
+    .withMessage('New password is required')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters'),
+
+  check('passwordConfirm')
+    .notEmpty()
+    .withMessage('Password confirmation is required')
+    .custom((val, { req }) => {
+      if (val !== req.body.password) {
+        throw new Error('Password confirmation does not match password');
+      }
+      return true;
+    }),
+
+  validatorMiddleware,
+];
+
 export {
   createUserValidator,
   getUserValidator,
@@ -225,4 +257,5 @@ export {
   getMeValidator,
   uploadUserImageValidator,
   changeMyPasswordValidator,
+  changeUserPasswordValidator,
 };

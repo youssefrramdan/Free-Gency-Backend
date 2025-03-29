@@ -172,6 +172,32 @@ const changeMyPassword = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Change password for specific user (Admin only)
+ * @route   PATCH /api/v1/users/changePassword/:id
+ * @access  Private/Admin
+ */
+const changeUserPassword = asyncHandler(async (req, res, next) => {
+  const { password } = req.body;
+  const { id } = req.params;
+
+  // 1) Get user from database
+  const user = await User.findById(id);
+  if (!user) {
+    return next(new ApiError(`User with ID ${id} not found`, 404));
+  }
+
+  // 2) Update password
+  user.password = password;
+  user.passwordChangedAt = Date.now();
+  await user.save();
+
+  // 3) Return response
+  res.status(200).json({
+    message: 'Password changed successfully',
+  });
+});
+
 export {
   createUser,
   getAllUsers,
@@ -182,4 +208,5 @@ export {
   updateMe,
   uploadUserImage,
   changeMyPassword,
+  changeUserPassword,
 };

@@ -8,20 +8,20 @@ Free-Gency is a platform that connects **clients with freelance teams**, providi
 
 ## 🌍 Deployment
 
-The project is deployed using **Heroku** at the following link:
-🔗 https://free-gency-api.herokuapp.com
+The project is deployed using **Koyeb** at the following link:
+🔗 https://free-gency-v1.koyeb.app
 
 ### 🌐 Access the Live Application
 
 ```sh
-🔗 https://free-gency-api.herokuapp.com
+🔗 https://free-gency-v1.koyeb.app
 ```
 
 ### 📩 Postman API Collection
 
 You can test the API using **Postman Workspace**:
 
-🔗 [Postman Workspace](https://gradutrion-team.postman.co/workspace/Free-Gancy-API~13a47391-c795-4844-ace8-fa92c549ef68/collection/34651419-8bec1b05-9ea9-40e2-b9bf-e38f5ef1e5e1?action=share&source=collection_link&creator=34651419)
+🔗 [Postman Workspace](https://app.getpostman.com/join-team?invite_code=e76763dbffcf977fa5534af1ca11ce7ad39a9ba169a9f8d3da65a20a1c34952d&target_code=945b471ce411aed1b492f6f325cfe292)
 
 ---
 
@@ -69,7 +69,7 @@ You can test the API using **Postman Workspace**:
 
 ### 🚀 **Deployment**
 
-- ☁️ **Heroku** _(Hosting Service)_
+- ☁️ **Koyeb** _(Hosting Service)_
 
 ---
 
@@ -150,17 +150,17 @@ The server will run at `http://localhost:8000`.
 
 ### **User Routes** (`/api/v1/users`)
 
-| Method   | Endpoint                | Description                    |
-| -------- | ----------------------- | ------------------------------ |
-| `GET`    | `/`                     | Get all users                  |
-| `POST`   | `/`                     | Create a new user (Admin only) |
-| `GET`    | `/me`                   | Get current logged in user     |
-| `PUT`    | `/me`                   | Update current user profile    |
-| `GET`    | `/:id`                  | Get a specific user            |
-| `PUT`    | `/:id`                  | Update a specific user         |
-| `DELETE` | `/:id`                  | Delete a specific user         |
-| `PATCH`  | `/changePassword/:id`   | Change user password           |
-| `PATCH`  | `/upload-profile-image` | Update profile image           |
+| Method   | Endpoint              | Description                       |
+| -------- | --------------------- | --------------------------------- |
+| `GET`    | `/`                   | Get all users                     |
+| `POST`   | `/`                   | Create a new user (Admin only)    |
+| `GET`    | `/me`                 | Get current logged in user        |
+| `PUT`    | `/me`                 | Update current user profile       |
+| `GET`    | `/:id`                | Get a specific user               |
+| `PUT`    | `/:id`                | Update a specific user            |
+| `DELETE` | `/:id`                | Delete a specific user            |
+| `PATCH`  | `/changePassword`     | Change current user password      |
+| `PATCH`  | `/changePassword/:id` | Change user password (Admin only) |
 
 ### **Teams Routes** (`/api/v1/teams`)
 

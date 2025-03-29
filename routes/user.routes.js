@@ -9,6 +9,7 @@ import {
   updateMe,
   uploadUserImage,
   changeMyPassword,
+  changeUserPassword,
 } from '../controllers/user.controller.js';
 import {
   createUserValidator,
@@ -18,6 +19,7 @@ import {
   updateMeValidator,
   getMeValidator,
   changeMyPasswordValidator,
+  changeUserPasswordValidator,
 } from '../utils/validators/userValidator.js';
 import { protectedRoutes } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
@@ -27,7 +29,7 @@ const upload = createUploader('usersImages');
 userRouter.route('/').post(createUserValidator, createUser).get(getAllUsers);
 userRouter
   .route('/me')
-  .patch(protectedRoutes, getMeValidator, getMe)
+  .get(protectedRoutes, getMeValidator, getMe)
   .patch(protectedRoutes, updateMeValidator, updateMe);
 userRouter
   .route('/my-image')
@@ -35,6 +37,12 @@ userRouter
 userRouter
   .route('/changePassword')
   .patch(protectedRoutes, changeMyPasswordValidator, changeMyPassword);
+
+// مسار تغيير كلمة المرور لمستخدم محدد بواسطة المشرف
+userRouter
+  .route('/changePassword/:id')
+  .patch(protectedRoutes, changeUserPasswordValidator, changeUserPassword);
+
 userRouter
   .route('/:id')
   .get(getUserValidator, getUser)

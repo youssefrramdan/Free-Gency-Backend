@@ -187,6 +187,35 @@ const uploadUserImageValidator = [
   validatorMiddleware,
 ];
 
+/**
+ * @description  Validate Change Current User Password
+ * @route        PATCH /api/v1/users/changePassword
+ * @access       Private
+ */
+const changeMyPasswordValidator = [
+  check('currentPassword')
+    .notEmpty()
+    .withMessage('Current password is required'),
+
+  check('password')
+    .notEmpty()
+    .withMessage('New password is required')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters'),
+
+  check('passwordConfirm')
+    .notEmpty()
+    .withMessage('Password confirmation is required')
+    .custom((val, { req }) => {
+      if (val !== req.body.password) {
+        throw new Error('Password confirmation does not match password');
+      }
+      return true;
+    }),
+
+  validatorMiddleware,
+];
+
 export {
   createUserValidator,
   getUserValidator,
@@ -195,4 +224,5 @@ export {
   updateMeValidator,
   getMeValidator,
   uploadUserImageValidator,
+  changeMyPasswordValidator,
 };

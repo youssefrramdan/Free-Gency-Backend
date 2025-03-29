@@ -1,5 +1,4 @@
 import asyncHandler from 'express-async-handler';
-import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 import sendEmail from '../utils/sendEmail.js';
 import emailTemplate from '../utils/emailTemplate.js';
@@ -141,6 +140,38 @@ const uploadUserImage = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Change current user password
+ * @route   PATCH /api/v1/users/changePassword
+ * @access  Private
+ */
+const changeMyPassword = asyncHandler(async (req, res, next) => {
+  const { currentPassword, password } = req.body;
+
+  // 1) Get user from database
+  const user = await User.findById(req.user._id).select('+password');
+
+  // 2) Check if current password is correct
+  const isPasswordCorrect = await user.comparePassword(currentPassword);
+  if (!isPasswordCorrect) {
+    return next(new ApiError('Current password is incorrect', 401));
+  }
+
+  // 3) Update password
+  user.password = password;
+  user.passwordChangedAt = Date.now();
+  await user.save();
+
+  // 4) Generate token
+  const token = generateToken(user._id);
+
+  // 5) Return response
+  res.status(200).json({
+    message: 'Password changed successfully',
+    token,
+  });
+});
+
 export {
   createUser,
   getAllUsers,
@@ -150,4 +181,5 @@ export {
   getMe,
   updateMe,
   uploadUserImage,
+  changeMyPassword,
 };

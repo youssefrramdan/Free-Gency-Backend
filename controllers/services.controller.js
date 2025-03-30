@@ -7,6 +7,19 @@ import ApiError from '../utils/apiError.js';
  * @route   POST /api/v1/services
  * @access  Private/Admin
  */
+const setCategoryIdToBody = (req, res, next) => {
+  if (!req.body.category) req.body.category = req.params.categoryId;
+  next();
+};
+
+const createFilterObject = (req, res, next) => {
+  let filterObject = {};
+  if (req.params.categoryId) {
+    filterObject = { category: req.params.categoryId };
+  }
+  req.filterObject = filterObject;
+  next();
+};
 const createService = asyncHandler(async (req, res, next) => {
   req.body.image = req.file.path;
   const service = await Service.create(req.body);
@@ -63,11 +76,8 @@ const deleteSpecificService = asyncHandler(async (req, res, next) => {
  * @access  Public
  */
 const getAllServices = asyncHandler(async (req, res, next) => {
-  const filterObject = {};
-  if (req.params.categoryId) {
-    filterObject.category = req.params.categoryId;
-  }
-  const services = await Service.find(filterObject);
+    
+  const services = await Service.find(req.filterObject);
 
   res.status(200).json({
     message: 'success',
@@ -95,4 +105,6 @@ export {
   deleteSpecificService,
   getAllServices,
   getSpecificService,
+  setCategoryIdToBody,
+  createFilterObject,
 };

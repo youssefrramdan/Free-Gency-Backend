@@ -1,10 +1,12 @@
 import express from 'express';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
 import {
+    createFilterObject,
   createService,
   deleteSpecificService,
   getAllServices,
   getSpecificService,
+  setCategoryIdToBody,
   updateSpecificService,
 } from '../controllers/services.controller.js';
 import {
@@ -22,8 +24,8 @@ const upload = createUploader('servicesImages');
 
 servicesRouter
   .route('/')
-  .get(getAllServices)
-  .post(upload.single('image'), createServiceValidator, createService);
+  .get(createFilterObject, getAllServices)
+  .post(upload.single('image'), setCategoryIdToBody, createServiceValidator, createService);
 servicesRouter
   .route('/:id')
   .get(getSpecificServiceValidator, getSpecificService)

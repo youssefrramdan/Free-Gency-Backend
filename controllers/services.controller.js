@@ -63,8 +63,11 @@ const deleteSpecificService = asyncHandler(async (req, res, next) => {
  * @access  Public
  */
 const getAllServices = asyncHandler(async (req, res, next) => {
-  const services = await Service.find();
-  console.log(req.params.categoryId);
+  const filterObject = {};
+  if (req.params.categoryId) {
+    filterObject.category = req.params.categoryId;
+  }
+  const services = await Service.find(filterObject);
 
   res.status(200).json({
     message: 'success',

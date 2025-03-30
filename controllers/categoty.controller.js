@@ -1,0 +1,68 @@
+import asyncHandler from 'express-async-handler';
+import Category from '../models/category.model.js';
+import ApiError from '../utils/apiError.js';
+
+const createCategory = asyncHandler(async (req, res, next) => {
+  req.body.image = req.file.path;
+  const category = await Category.create(req.body);
+
+  res.status(201).json({
+    message: 'success',
+    data: category,
+  });
+});
+
+const updateCategory = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  if (req.file) {
+    req.body.image = req.file.path;
+  }
+  const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!category) {
+    return next(new ApiError(`There isn't a category for this ${id}`, 404));
+  }
+  res.status(200).json({
+    message: 'success',
+    data: category,
+  });
+});
+const deletegetCategory = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const category = await Category.findByIdAndDelete(id);
+
+  if (!category) {
+    return next(new ApiError(`There isn't a category for this ${id}`, 404));
+  }
+  res.status(200).json({
+    message: 'success',
+    data: category,
+  });
+});
+
+const getAllCategories = asyncHandler(async (req, res, next) => {
+  const categories = await Category.find();
+  res.status(200).json({
+    message: 'success',
+    data: categories,
+  });
+});
+
+const getSpecificCategory = asyncHandler(async (req, res, next) => {
+  const category = await Category.findById(req.params.id);
+  res.status(200).json({
+    message: 'success',
+    data: category,
+  });
+});
+
+export {
+  getAllCategories,
+  getSpecificCategory,
+  createCategory,
+  updateCategory,
+  deletegetCategory,
+};

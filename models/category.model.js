@@ -5,11 +5,15 @@ const categorySchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, 'Category name is required'],
-      unique: true,
       trim: true,
     },
     image: {
       type: String,
+    },
+    status: {
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'active',
     },
   },
   {
@@ -30,6 +34,3 @@ export default Category;
 //endpoints
 // ----> teams assigned in this category -sort = rating
 // ----> projects assigned in this category
-
-//endpoints
-//

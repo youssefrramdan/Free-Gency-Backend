@@ -4,13 +4,11 @@ const serviceSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Service name is required'],
       trim: true,
     },
     category: {
       type: mongoose.Schema.ObjectId,
       ref: 'Category',
-      required: [true, 'Service must belong to a category'],
     },
     image: {
       type: String,

@@ -13,9 +13,13 @@ import {
   getSpecificCategory,
   updateCategory,
 } from '../controllers/categoty.controller.js';
+import servicesRouter from './services.routes.js';
 
 const categoryRouter = express.Router();
 const upload = createUploader('categoryImages');
+
+// Nested route - Services as Subcategories
+categoryRouter.use('/:categoryId/services', servicesRouter);
 
 categoryRouter
   .route('/')

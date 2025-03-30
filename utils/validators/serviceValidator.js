@@ -80,7 +80,7 @@ const updateServiceValidator = [
       asyncHandler(async (val, { req }) => {
         const category = await Category.findById({ _id: val });
         if (!category) {
-          throw new Error(`There isnt Category for this id ${category}`);
+          throw new Error(`There isnt Category for this id `);
         }
         return true;
       })

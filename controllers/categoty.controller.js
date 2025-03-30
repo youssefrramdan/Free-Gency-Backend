@@ -2,6 +2,11 @@ import asyncHandler from 'express-async-handler';
 import Category from '../models/category.model.js';
 import ApiError from '../utils/apiError.js';
 
+/**
+ * @desc    Create new category
+ * @route   POST /api/v1/categories
+ * @access  Private/Admin
+ */
 const createCategory = asyncHandler(async (req, res, next) => {
   req.body.image = req.file.path;
   const category = await Category.create(req.body);
@@ -12,6 +17,11 @@ const createCategory = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Update specific category
+ * @route   PUT /api/v1/categories/:id
+ * @access  Private/Admin
+ */
 const updateCategory = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   if (req.file) {
@@ -30,6 +40,12 @@ const updateCategory = asyncHandler(async (req, res, next) => {
     data: category,
   });
 });
+
+/**
+ * @desc    Delete specific category
+ * @route   DELETE /api/v1/categories/:id
+ * @access  Private/Admin
+ */
 const deletegetCategory = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const category = await Category.findByIdAndDelete(id);
@@ -39,10 +55,14 @@ const deletegetCategory = asyncHandler(async (req, res, next) => {
   }
   res.status(200).json({
     message: 'success',
-    data: category,
   });
 });
 
+/**
+ * @desc    Get all categories
+ * @route   GET /api/v1/categories
+ * @access  Public
+ */
 const getAllCategories = asyncHandler(async (req, res, next) => {
   const categories = await Category.find();
   res.status(200).json({
@@ -51,6 +71,11 @@ const getAllCategories = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Get specific category
+ * @route   GET /api/v1/categories/:id
+ * @access  Public
+ */
 const getSpecificCategory = asyncHandler(async (req, res, next) => {
   const category = await Category.findById(req.params.id);
   res.status(200).json({

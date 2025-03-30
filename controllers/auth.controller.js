@@ -148,6 +148,11 @@ const confirmEmail = asyncHandler(async (req, res, next) => {
   );
 });
 
+/**
+ * @desc    Resend verification email
+ * @route   POST /api/v1/auth/resend-email
+ * @access  Public
+ */
 const resendEmail = asyncHandler(async (req, res, next) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
@@ -168,6 +173,11 @@ const resendEmail = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Protect routes - middleware to check if user is logged in
+ * @route   Middleware
+ * @access  Private
+ */
 const protectedRoutes = asyncHandler(async (req, res, next) => {
   let token;
   if (
@@ -295,6 +305,23 @@ const resetPassword = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({ message: 'success', userData, token });
 });
+
+/**
+ * @desc    Check if user has required role - middleware
+ * @route   Middleware
+ * @access  Private
+ */
+const allowTo =
+  (...roles) =>
+  (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new ApiError('You do not have permission to perform this action', 403)
+      );
+    }
+    next();
+  };
+
 export {
   signup,
   signupAndCreateTeam,
@@ -302,6 +329,7 @@ export {
   confirmEmail,
   resendEmail,
   protectedRoutes,
+  allowTo,
   forgetPassword,
   verifyResetCode,
   resetPassword,

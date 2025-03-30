@@ -7,10 +7,18 @@ import {
   getSpecificService,
   updateSpecificService,
 } from '../controllers/services.controller.js';
-import { createServiceValidator, deleteServiceValidator, getSpecificServiceValidator, updateServiceValidator } from '../utils/validators/serviceValidator.js';
+import {
+  createServiceValidator,
+  deleteServiceValidator,
+  getSpecificServiceValidator,
+  updateServiceValidator,
+} from '../utils/validators/serviceValidator.js';
 
-const servicesRouter = express.Router();
-const upload = createUploader('categoryImages');
+// mergeParams: Allow us to access params on other routers
+// ex: We need to access param --> (categoryId) from category router
+
+const servicesRouter = express.Router({ mergeParams: true });
+const upload = createUploader('servicesImages');
 
 servicesRouter
   .route('/')

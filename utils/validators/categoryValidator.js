@@ -50,7 +50,7 @@ const updateCategoryValidator = [
   check('image')
     .optional()
     .custom((val, { req }) => {
-      if (req.files && !req.files.image) {
+      if (!req.file) {
         throw new Error('Please upload a valid image file');
       }
       return true;
@@ -83,7 +83,7 @@ const deleteCategoryValidator = [
 ];
 
 export {
-    createCategoryValidator,
+  createCategoryValidator,
   deleteCategoryValidator,
   getSpecificCategoryValidator,
   updateCategoryValidator,

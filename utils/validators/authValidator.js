@@ -1,5 +1,5 @@
 /* eslint-disable import/no-extraneous-dependencies */
-import { body, check } from 'express-validator';
+import { check } from 'express-validator';
 import asyncHandler from 'express-async-handler';
 import validatorMiddleware from '../../middlewares/validatorMiddleware.js';
 import User from '../../models/user.model.js';

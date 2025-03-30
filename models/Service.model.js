@@ -5,7 +5,6 @@ const serviceSchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, 'Service name is required'],
-      unique: true,
       trim: true,
     },
     category: {
@@ -16,6 +15,12 @@ const serviceSchema = new mongoose.Schema(
     image: {
       type: String,
     },
+    status: {
+        type: String,
+        enum: ['active', 'inactive'],
+        default: 'active',
+      },
+
   },
   {
     timestamps: true,

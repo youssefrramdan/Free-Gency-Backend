@@ -14,11 +14,10 @@ const serviceSchema = new mongoose.Schema(
       type: String,
     },
     status: {
-        type: String,
-        enum: ['active', 'inactive'],
-        default: 'active',
-      },
-
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'active',
+    },
   },
   {
     timestamps: true,
@@ -26,7 +25,6 @@ const serviceSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
-
 
 // Middleware to ensure service belongs to a valid category
 serviceSchema.pre('save', async function (next) {
@@ -44,6 +42,14 @@ serviceSchema.pre('save', async function (next) {
   }
 });
 
+// // Middleware للتحقق من صحة كود الفريق
+serviceSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'category',
+    select: 'name image -_id',
+  });
+  next();
+});
 serviceSchema.index({ name: 1 });
 serviceSchema.index({ category: 1 });
 serviceSchema.index({ status: 1 });

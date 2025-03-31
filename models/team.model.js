@@ -31,6 +31,7 @@ const teamSchema = new mongoose.Schema(
           enum: ['member', 'Team_leader'],
           default: 'member',
         },
+        job: String,
         joinedAt: {
           type: Date,
           default: Date.now,
@@ -126,10 +127,11 @@ const teamSchema = new mongoose.Schema(
   }
 );
 // Middleware للتحقق من صحة كود الفريق
-teamSchema.pre('save', function (next) {
-  if (this.teamCode) {
-    this.teamCode = this.teamCode.toUpperCase().replace(/\s/g, '');
-  }
+teamSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'teamLeader',
+    select: 'name email profileImage',
+  });
   next();
 });
 

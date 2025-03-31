@@ -35,6 +35,7 @@ const userSchema = new mongoose.Schema(
       ref: 'Team',
     },
     skills: [String],
+    // update --> 
     interests: [
       {
         type: mongoose.Schema.ObjectId,

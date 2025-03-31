@@ -10,6 +10,7 @@ import userRouter from './routes/user.routes.js';
 import authRouter from './routes/auth.routes.js';
 import categoryRouter from './routes/category.routes.js';
 import servicesRouter from './routes/services.routes.js';
+import teamRouter from './routes/team.routes.js';
 
 dotenv.config({ path: './config/config.env' });
 
@@ -37,6 +38,7 @@ app.use('/api/v1/users', userRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/services', servicesRouter);
+app.use('/api/v1/teams' , teamRouter)
 // Handle undefined routes
 app.all('*', (req, res, next) => {
   next(new ApiError(`Can't find ${req.originalUrl} on this server!`, 400));

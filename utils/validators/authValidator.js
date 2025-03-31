@@ -4,6 +4,7 @@ import asyncHandler from 'express-async-handler';
 import validatorMiddleware from '../../middlewares/validatorMiddleware.js';
 import User from '../../models/user.model.js';
 import Team from '../../models/team.model.js';
+import Category from '../../models/category.model.js';
 
 /**
  * @description  Validate User Registration
@@ -196,7 +197,20 @@ const signupTeamValidator = [
       })
     ),
 
-  check('category').notEmpty().withMessage('Team category is required'),
+  check('category')
+    .notEmpty()
+    .withMessage('category ID is required')
+    .isMongoId()
+    .withMessage('Invalid category ID format')
+    .custom(
+      asyncHandler(async (val, { req }) => {
+        const category = await Category.findById({ _id: val });
+        if (!category) {
+          throw new Error(`There isnt Category for this id ${category}`);
+        }
+        return true;
+      })
+    ),
 
   check('teamCode')
     .notEmpty()

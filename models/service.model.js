@@ -4,11 +4,13 @@ const serviceSchema = new mongoose.Schema(
   {
     name: {
       type: String,
+      required: [true, 'Service name is required'],
       trim: true,
     },
     category: {
       type: mongoose.Schema.ObjectId,
       ref: 'Category',
+      required: [true, 'Service must belong to a category'],
     },
     image: {
       type: String,
@@ -21,8 +23,20 @@ const serviceSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
+    toJSON: {
+      virtuals: true,
+      transform: function (doc, ret) {
+        delete ret.id;
+        return ret;
+      },
+    },
+    toObject: {
+      virtuals: true,
+      transform: function (doc, ret) {
+        delete ret.id;
+        return ret;
+      },
+    },
   }
 );
 
@@ -42,14 +56,7 @@ serviceSchema.pre('save', async function (next) {
   }
 });
 
-// // Middleware للتحقق من صحة كود الفريق
-serviceSchema.pre(/^find/, function (next) {
-  this.populate({
-    path: 'category',
-    select: 'name image -_id',
-  });
-  next();
-});
+// Indexes
 serviceSchema.index({ name: 1 });
 serviceSchema.index({ category: 1 });
 serviceSchema.index({ status: 1 });

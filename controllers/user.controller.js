@@ -53,7 +53,7 @@ const getUser = asyncHandler(async (req, res, next) => {
  * @access  Private/Admin
  */
 const getAllUsers = asyncHandler(async (req, res, next) => {
-  const users = await User.find();
+  const users = await User.find()
   res.status(200).json({
     message: 'success',
     users,
@@ -100,7 +100,7 @@ const deleteUser = asyncHandler(async (req, res, next) => {
  * @access  Private
  */
 const getMe = asyncHandler(async (req, res, next) => {
-  const user = await User.findById(req.user._id);
+  const user = await User.findById(req.user._id)
   res.status(200).json({
     message: 'success',
     user,
@@ -116,7 +116,7 @@ const updateMe = asyncHandler(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(req.user._id, req.body, {
     new: true,
     runValidators: true,
-  }).select('-password -__v');
+  }).select('-password -__v -createdAt -updatedAt');
 
   res.status(200).json({
     message: 'success',

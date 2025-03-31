@@ -64,7 +64,15 @@ const deletegetCategory = asyncHandler(async (req, res, next) => {
  * @access  Public
  */
 const getAllCategories = asyncHandler(async (req, res, next) => {
-  const categories = await Category.find();
+  const categories = await Category.find()
+    .populate({ path: 'servicesCount' })
+    .populate({
+      path: 'services',
+      select: 'name image -category',
+      match: { status: 'active' },
+    })
+    .select('-__v -createdAt -updatedAt');
+
   res.status(200).json({
     message: 'success',
     data: categories,
@@ -77,7 +85,14 @@ const getAllCategories = asyncHandler(async (req, res, next) => {
  * @access  Public
  */
 const getSpecificCategory = asyncHandler(async (req, res, next) => {
-  const category = await Category.findById(req.params.id);
+  const category = await Category.findById(req.params.id)
+    .populate({
+      path: 'services',
+      select: 'name image status',
+      match: { status: 'active' },
+    })
+    .select('-__v -createdAt -updatedAt');
+
   res.status(200).json({
     message: 'success',
     data: category,

@@ -122,26 +122,24 @@ const teamSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
   }
 );
-// Middleware للتحقق من صحة كود الفريق
-teamSchema.pre(/^find/, function (next) {
-  this.populate({
-    path: 'teamLeader',
-    select: 'name email profileImage',
-  });
-  next();
-});
+// // Middleware للتحقق من صحة كود الفريق
+// teamSchema.pre(/^find/, function (next) {
+//   this.populate({
+//     path: 'teamLeader',
+//     select: 'name email profileImage',
+//   });
+//   next();
+// });
 
-// Virtual للمشاريع النشطة
-teamSchema.virtual('activeProjects', {
-  ref: 'Project',
-  localField: 'projects',
-  foreignField: '_id',
-  match: { status: 'active' },
-});
+// // Virtual للمشاريع النشطة
+// teamSchema.virtual('activeProjects', {
+//   ref: 'Project',
+//   localField: 'projects',
+//   foreignField: '_id',
+//   match: { status: 'active' },
+// });
 
 // Method to accept a join request and add team to user
 teamSchema.methods.acceptJoinRequest = async function (

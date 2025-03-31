@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
       ref: 'Team',
     },
     skills: [String],
-    // update --> 
+    // update -->
     interests: [
       {
         type: mongoose.Schema.ObjectId,
@@ -57,10 +57,21 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
   }
 );
+// Populate createdTeam and interests before any find query
+userSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'createdTeam',
+    select: 'name teamCode',
+  })
+    .populate({
+      path: 'interests',
+      select: 'name id',
+    })
+    .select('-__v -createdAt -updatedAt');
+  next();
+});
 
 // Hash password middleware
 userSchema.pre('save', async function (next) {

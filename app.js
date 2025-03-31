@@ -50,6 +50,10 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/services', servicesRouter);
 app.use('/api/v1/teams', teamRouter);
+app.get('/ping', (req, res) => {
+    res.status(200).send('pong');
+  });
+
 // Handle undefined routes
 app.all('*', (req, res, next) => {
   next(new ApiError(`Can't find ${req.originalUrl} on this server!`, 400));

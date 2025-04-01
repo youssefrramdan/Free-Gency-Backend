@@ -44,7 +44,7 @@ teamRouter
   .route('/')
   .post(
     protectedRoutes,
-    allowTo('team_leader'),
+    allowTo('Team_leader'),
     createTeamValidator,
     createTeam
   );

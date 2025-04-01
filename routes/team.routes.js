@@ -63,7 +63,7 @@ teamRouter
 
 teamRouter
   .route('/requests/:id/reject')
-  .patch(protectedRoutes, rejectJoinRequest);
+  .patch(protectedRoutes, allowTo('team_leader'), rejectJoinRequest);
 
 // My team routes
 teamRouter

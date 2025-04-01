@@ -85,9 +85,9 @@ const CreaterequestToJoinTeam = asyncHandler(async (req, res, next) => {
 });
 
 /**
- * @desc    Get all join requests for the team leader's team
+ * @desc    Get all join requests
  * @route   GET /api/v1/teams/requests
- * @access  Private/Team Leader
+ * @access  Private
  * @returns {
  *   status: string,
  *   data: {
@@ -97,18 +97,23 @@ const CreaterequestToJoinTeam = asyncHandler(async (req, res, next) => {
  *   }
  * }
  */
-const getAllMyTeamJoinRequests = asyncHandler(async (req, res, next) => {
-  // Check if user has a team
-  if (!req.user.createdTeam) {
-    return next(new ApiError('You do not have a team to view requests', 404));
+const getJoinRequests = asyncHandler(async (req, res, next) => {
+  // Build query based on user role
+  const query = {};
+
+  if (req.user.createdTeam) {
+    // If user is a team leader, get all requests for their team
+    query.team = req.user.createdTeam._id;
+  } else {
+    // If user is a regular user, get only their requests
+    query.user = req.user._id;
   }
 
-  // Get all requests with populated user data
-  const requests = await JoinRequest.find({
-    team: req.user.createdTeam._id,
-  })
-    .select('-team -__v -createdAt -updatedAt') // Exclude unwanted fields
+  // Get all requests with populated data
+  const requests = await JoinRequest.find(query)
+    .select('-__v -createdAt -updatedAt')
     .populate('user', 'name email profileImage')
+    .populate('team', 'name teamCode')
     .sort({ createdAt: -1 });
 
   // Group requests by status
@@ -276,7 +281,7 @@ const deleteJoinRequest = asyncHandler(async (req, res, next) => {
 
 export {
   CreaterequestToJoinTeam,
-  getAllMyTeamJoinRequests,
+  getJoinRequests,
   getSpecificJoinRequest,
   acceptJoinRequest,
   rejectJoinRequest,

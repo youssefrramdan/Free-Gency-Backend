@@ -48,12 +48,6 @@ const signUpValidator = [
     .isLength({ min: 3 })
     .withMessage('Name must be at least 3 characters'),
 
-  // Validate role if provided
-  check('role')
-    .optional()
-    .isIn(['client', 'teamMember', 'teamLeader'])
-    .withMessage("Role must be either 'client', 'teamMember', or 'teamLeader'"),
-
   // Apply validator middleware to handle validation results
   validatorMiddleware,
 ];
@@ -174,12 +168,6 @@ const updateProfileValidator = [
 const signupTeamValidator = [
   // Include all validations from signUpValidator
   ...signUpValidator,
-
-  // Force role to be teamleader
-  check('role')
-    .exists()
-    .equals('teamLeader')
-    .withMessage("Role must be 'teamLeader' for team creation"),
 
   // Team-specific validations
   check('teamName')

@@ -36,7 +36,7 @@ const signup = asyncHandler(async (req, res, next) => {
     user: {
       id: user._id,
       email: user.email,
-      role: user.role,
+      role: 'client',
       name: user.name,
     },
     token,
@@ -53,6 +53,7 @@ const signupAndCreateTeam = asyncHandler(async (req, res, next) => {
   const user = await User.create({
     name,
     email,
+    role: 'teamLeader',
     password,
   });
   const team = await Team.create({

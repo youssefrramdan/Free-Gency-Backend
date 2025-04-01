@@ -4,6 +4,7 @@ import {
   getAllTeams,
   getSpecificTeam,
   getMyTeam,
+  getMyTeams,
   deleteMyTeam,
   updateMyTeam,
   addLastedProject,
@@ -26,12 +27,12 @@ import {
   updateMemberRoleValidator,
 } from '../utils/validators/teamValidator.js';
 import {
-  getAllMyTeamJoinRequests,
   getSpecificJoinRequest,
   CreaterequestToJoinTeam,
   acceptJoinRequest,
   rejectJoinRequest,
   deleteJoinRequest,
+  getJoinRequests,
 } from '../controllers/joinRequests.controller.js';
 import validateJoinRequest from '../middlewares/validateJoinRequest.js';
 
@@ -51,7 +52,7 @@ teamRouter.route('/').post(
 // Team join requests routes
 teamRouter.route('/join').post(protectedRoutes, CreaterequestToJoinTeam);
 
-teamRouter.route('/requests').get(protectedRoutes, getAllMyTeamJoinRequests);
+teamRouter.route('/requests').get(protectedRoutes, getJoinRequests);
 
 teamRouter
   .route('/requests/:id')
@@ -68,10 +69,13 @@ teamRouter
   // allowTo('teamLeader')
   .patch(protectedRoutes, validateJoinRequest, rejectJoinRequest);
 
-// My team routes
+// User's teams routes
+teamRouter.route('/my-teams').get(protectedRoutes, getMyTeams);
+teamRouter.route('/my-team').get(protectedRoutes, getMyTeam);
+
+// Team management routes (for team leaders)
 teamRouter
   .route('/my-team')
-  .get(protectedRoutes, getMyTeam)
   .put(protectedRoutes, updateMyTeamValidator, updateMyTeam)
   .delete(protectedRoutes, deleteMyTeam);
 

@@ -146,7 +146,6 @@ const addLastedProjectValidator = [
   validatorMiddleware,
 ];
 
-
 const updateLastedProjectValidator = [
   check('projectId').isMongoId().withMessage('Invalid project id format'),
   check('title')
@@ -177,6 +176,19 @@ const updateLastedProjectValidator = [
   validatorMiddleware,
 ];
 
+/**
+ * @desc    Validate update member role
+ */
+ const updateMemberRoleValidator = [
+  check('role')
+    .notEmpty()
+    .withMessage('Role is required')
+    .isIn(['team_leader', 'team_member', 'admin'])
+    .withMessage('Invalid role'),
+  validatorMiddleware,
+];
+
+
 export {
   createTeamValidator,
   getSpecificTeamValidator,
@@ -184,4 +196,5 @@ export {
   deleteSpecificTeamValidator,
   addLastedProjectValidator,
   updateLastedProjectValidator,
+  updateMemberRoleValidator,
 };

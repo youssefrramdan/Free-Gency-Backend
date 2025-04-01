@@ -28,7 +28,7 @@ const teamSchema = new mongoose.Schema(
         },
         role: {
           type: String,
-          enum: ['member', 'Team_leader'],
+          enum: ['Team_member', 'Team_leader'],
           default: 'member',
         },
         job: String,
@@ -141,52 +141,6 @@ const teamSchema = new mongoose.Schema(
 //   match: { status: 'active' },
 // });
 
-// Method to accept a join request and add team to user
-teamSchema.methods.acceptJoinRequest = async function (
-  requestId,
-  teamLeaderId
-) {
-  const request = await mongoose.model('JoinRequest').findById(requestId);
-
-  if (
-    !request ||
-    request.status !== 'pending' ||
-    !request.team.equals(this._id)
-  ) {
-    throw new Error('Invalid request');
-  }
-
-  request.status = 'accepted';
-  request.responseAt = Date.now();
-  request.responseBy = teamLeaderId;
-  await request.save();
-
-  // Add the team to the user after accepting the request
-  const user = await mongoose.model('User').findById(request.user);
-
-  this.members.push({
-    user: request.user,
-    role: 'member',
-    joinedAt: Date.now(),
-  });
-
-  await this.save();
-  // Add the team to the user
-  user.teams.push(this._id);
-  await user.save();
-};
-
-// Method to reject a join request
-teamSchema.methods.rejectJoinRequest = async function (requestId) {
-  const request = this.joinRequests.id(requestId);
-
-  if (!request || request.status !== 'pending') {
-    throw new Error('Invalid request');
-  }
-
-  request.status = 'rejected';
-  await this.save();
-};
 
 // Indexes للأداء الأفضل
 teamSchema.index({ teamLeader: 1 });

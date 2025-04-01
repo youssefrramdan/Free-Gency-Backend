@@ -60,6 +60,14 @@ const signupAndCreateTeam = asyncHandler(async (req, res, next) => {
     name: teamName,
     category,
     teamCode,
+    members: [
+      {
+        user: user._id,
+        role: 'Team_leader',
+        job: 'Team Leader',
+        joinedAt: new Date(),
+      },
+    ],
   });
 
   user.createdTeam = team._id;

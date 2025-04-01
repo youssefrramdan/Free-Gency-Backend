@@ -12,6 +12,9 @@ const joinRequestSchema = new mongoose.Schema(
       ref: 'Team',
       required: [true, 'Team is required'],
     },
+    job: {
+      type: String,
+    },
     status: {
       type: String,
       enum: ['pending', 'accepted', 'rejected'],

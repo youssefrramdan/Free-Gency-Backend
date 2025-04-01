@@ -40,12 +40,14 @@ const teamRouter = express.Router();
 teamRouter.route('/').get(getAllTeams);
 
 // Protected routes
-teamRouter.route('/').post(
-  protectedRoutes,
-  // allowTo(['team_leader', 'admin']),
-  createTeamValidator,
-  createTeam
-);
+teamRouter
+  .route('/')
+  .post(
+    protectedRoutes,
+    allowTo('team_leader'),
+    createTeamValidator,
+    createTeam
+  );
 
 // Team join requests routes
 teamRouter.route('/join').post(protectedRoutes, CreaterequestToJoinTeam);

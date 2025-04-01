@@ -179,15 +179,14 @@ const updateLastedProjectValidator = [
 /**
  * @desc    Validate update member role
  */
- const updateMemberRoleValidator = [
+const updateMemberRoleValidator = [
   check('role')
     .notEmpty()
     .withMessage('Role is required')
-    .isIn(['team_leader', 'team_member', 'admin'])
-    .withMessage('Invalid role'),
+    .isIn(['teamLeader', 'teamMember', 'admin'])
+    .withMessage('Invalid role. Must be teamLeader, teamMember, or admin'),
   validatorMiddleware,
 ];
-
 
 export {
   createTeamValidator,

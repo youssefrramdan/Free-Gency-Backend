@@ -30,7 +30,7 @@ const createTeam = asyncHandler(async (req, res, next) => {
     members: [
       {
         user: req.user._id,
-        role: 'Team_leader',
+        role: 'teamLeader',
         job: 'Team Leader',
         joinedAt: new Date(),
       },
@@ -265,20 +265,32 @@ const deleteLastedProject = asyncHandler(async (req, res, next) => {
  */
 const deleteTeam = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
-  const team = await Team.findByIdAndDelete(id);
+
+  // 1) Get team with members populated
+  const team = await Team.findById(id).populate('members.user', '_id');
   if (!team) {
     return next(new ApiError(`There isn't a team with this id: ${id}`, 404));
   }
 
-  // Remove team reference from team leader's schema
+  // 2) Get all member IDs
+  const memberIds = team.members.map(member => member.user._id);
+
+  // 3) Remove team from all members' teams array
+  await User.updateMany(
+    { _id: { $in: memberIds } },
+    { $pull: { teams: team._id } }
+  );
+
+  // 4) Remove createdTeam reference from team leader
   await User.findByIdAndUpdate(team.teamLeader, {
     $unset: { createdTeam: 1 },
   });
 
-  // Remove team from all users' teams array
-  await User.updateMany({ teams: team._id }, { $pull: { teams: team._id } });
+  // 5) Delete the team
+  await Team.findByIdAndDelete(id);
 
   res.status(200).json({
+    status: 'success',
     message: 'Team deleted successfully',
   });
 });
@@ -351,7 +363,7 @@ const removeTeamMember = asyncHandler(async (req, res, next) => {
     return next(new ApiError('Member not found', 404));
   }
 
-  if (member.role === 'Team_leader') {
+  if (member.role === 'teamLeader') {
     return next(new ApiError('Cannot remove team leader', 400));
   }
 
@@ -393,8 +405,8 @@ const getTeamStatistics = asyncHandler(async (req, res, next) => {
     totalMembers: team.members.length,
     totalProjects: team.lastedProjects.length,
     memberRoles: {
-      team_leader: team.members.filter(m => m.role === 'Team_leader').length,
-      team_member: team.members.filter(m => m.role === 'Team_member').length,
+      teamLeader: team.members.filter(m => m.role === 'teamLeader').length,
+      teamMember: team.members.filter(m => m.role === 'teamMember').length,
       admin: team.members.filter(m => m.role === 'admin').length,
     },
   };

@@ -51,10 +51,8 @@ const signUpValidator = [
   // Validate role if provided
   check('role')
     .optional()
-    .isIn(['client', 'team_member', 'team_leader'])
-    .withMessage(
-      "Role must be either 'client', 'team_member', or 'team_leader'"
-    ),
+    .isIn(['client', 'teamMember', 'teamLeader'])
+    .withMessage("Role must be either 'client', 'teamMember', or 'teamLeader'"),
 
   // Apply validator middleware to handle validation results
   validatorMiddleware,
@@ -177,10 +175,11 @@ const signupTeamValidator = [
   // Include all validations from signUpValidator
   ...signUpValidator,
 
-  // Force role to be team_leader
+  // Force role to be teamleader
   check('role')
-    .equals('team_leader')
-    .withMessage("Role must be 'team_leader' for team creation"),
+    .exists()
+    .equals('teamLeader')
+    .withMessage("Role must be 'teamLeader' for team creation"),
 
   // Team-specific validations
   check('teamName')

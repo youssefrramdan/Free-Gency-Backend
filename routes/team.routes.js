@@ -33,6 +33,7 @@ import {
   rejectJoinRequest,
   deleteJoinRequest,
 } from '../controllers/joinRequests.controller.js';
+import validateJoinRequest from '../middlewares/validateJoinRequest.js';
 
 const teamRouter = express.Router();
 
@@ -40,14 +41,12 @@ const teamRouter = express.Router();
 teamRouter.route('/').get(getAllTeams);
 
 // Protected routes
-teamRouter
-  .route('/')
-  .post(
-    protectedRoutes,
-    allowTo('Team_leader'),
-    createTeamValidator,
-    createTeam
-  );
+teamRouter.route('/').post(
+  protectedRoutes,
+  // allowTo('teamLeader'),
+  createTeamValidator,
+  createTeam
+);
 
 // Team join requests routes
 teamRouter.route('/join').post(protectedRoutes, CreaterequestToJoinTeam);
@@ -56,16 +55,18 @@ teamRouter.route('/requests').get(protectedRoutes, getAllMyTeamJoinRequests);
 
 teamRouter
   .route('/requests/:id')
-  .get(protectedRoutes, getSpecificJoinRequest)
-  .delete(protectedRoutes, deleteJoinRequest);
+  .get(protectedRoutes, validateJoinRequest, getSpecificJoinRequest)
+  .delete(protectedRoutes, validateJoinRequest, deleteJoinRequest);
 
 teamRouter
   .route('/requests/:id/accept')
-  .patch(protectedRoutes, allowTo('team_leader'), acceptJoinRequest);
+  // allowTo('teamLeader')
+  .patch(protectedRoutes, validateJoinRequest, acceptJoinRequest);
 
 teamRouter
   .route('/requests/:id/reject')
-  .patch(protectedRoutes, allowTo('team_leader'), rejectJoinRequest);
+  // allowTo('teamLeader')
+  .patch(protectedRoutes, validateJoinRequest, rejectJoinRequest);
 
 // My team routes
 teamRouter

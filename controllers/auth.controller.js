@@ -58,12 +58,13 @@ const signupAndCreateTeam = asyncHandler(async (req, res, next) => {
   const team = await Team.create({
     teamLeader: user._id,
     name: teamName,
+    role: 'teamLeader',
     category,
     teamCode,
     members: [
       {
         user: user._id,
-        role: 'Team_leader',
+        role: 'teamLeader',
         job: 'Team Leader',
         joinedAt: new Date(),
       },

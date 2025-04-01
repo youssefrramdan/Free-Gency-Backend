@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['client', 'team_member', 'team_leader'],
+      enum: ['client', 'teamMember', 'teamLeader'],
       default: 'client',
     },
     teams: [
@@ -69,6 +69,9 @@ userSchema.pre(/^find/, function (next) {
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
+  if (!this.role) {
+    this.role = 'teamMember';
+  }
   next();
 });
 
@@ -84,7 +87,7 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 // Add method for updating user teams
 userSchema.methods.addTeam = async function (teamId) {
   this.teams.push(teamId);
-  this.role = 'team_member';
+  this.role = 'teamMember';
   await this.save();
 };
 

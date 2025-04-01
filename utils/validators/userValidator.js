@@ -39,10 +39,8 @@ const createUserValidator = [
   // Validate role if provided
   check('role')
     .optional()
-    .isIn(['client', 'team_member', 'team_leader'])
-    .withMessage(
-      "Role must be either 'client', 'team_member', or 'team_leader'"
-    ),
+    .isIn(['client', 'teamMember', 'teamLeader'])
+    .withMessage("Role must be either 'client', 'teamMember', or 'teamLeader'"),
 
   // Apply validator middleware to handle validation results
   validatorMiddleware,
@@ -91,10 +89,8 @@ const updateUserValidator = [
 
   check('role')
     .optional()
-    .isIn(['client', 'team_member', 'team_leader'])
-    .withMessage(
-      "Role must be either 'client', 'team_member', or 'team_leader'"
-    ),
+    .isIn(['client', 'teamMember', 'teamLeader'])
+    .withMessage("Role must be either 'client', 'teamMember', or 'teamLeader'"),
 
   check('bio')
     .optional()

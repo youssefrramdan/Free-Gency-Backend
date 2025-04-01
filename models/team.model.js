@@ -28,8 +28,8 @@ const teamSchema = new mongoose.Schema(
         },
         role: {
           type: String,
-          enum: ['Team_member', 'Team_leader'],
-          default: 'member',
+          enum: ['teamMember', 'teamLeader'],
+          default: 'teamMember',
         },
         job: String,
         joinedAt: {
@@ -134,7 +134,7 @@ teamSchema.index({ status: 1 });
 teamSchema.methods.addMember = async function (userId, job) {
   this.members.push({
     user: userId,
-    role: 'Team_member',
+    role: 'teamMember',
     job,
     joinedAt: Date.now(),
   });

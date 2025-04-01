@@ -2,6 +2,7 @@ import asyncHandler from 'express-async-handler';
 import Team from '../models/team.model.js';
 import JoinRequest from '../models/JoinRequest.model.js';
 import ApiError from '../utils/apiError.js';
+import User from '../models/user.model.js';
 
 /**
  * @desc    Create a new request to join a team
@@ -12,34 +13,75 @@ import ApiError from '../utils/apiError.js';
  */
 const CreaterequestToJoinTeam = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
-  const { teamCode } = req.body;
+  const { teamCode, job } = req.body;
+
+  // 1) Validate required fields
+  if (!teamCode) {
+    return next(new ApiError('Team code is required', 400));
+  }
+  if (!job) {
+    return next(new ApiError('Job role is required', 400));
+  }
+
+  // 2) Find team and check if exists
   const team = await Team.findOne({ teamCode });
   if (!team) {
     return next(new ApiError(`Team not found for this code ${teamCode}`, 404));
   }
 
+  // 3) Check if user is already a member of the team
+  const isAlreadyMember = team.members.some(member =>
+    member.user.equals(userId)
+  );
+  if (isAlreadyMember) {
+    return next(new ApiError('You are already a member of this team', 400));
+  }
+
+  // 4) Check for existing requests
   const existingRequest = await JoinRequest.findOne({
     user: userId,
     team: team._id,
-  });
+  }).select('status');
 
   if (existingRequest) {
-    if (existingRequest.status === 'pending') {
-      return res.status(400).json({ message: 'Join request already sent' });
-    }
-    if (existingRequest.status === 'accepted') {
-      return res.status(400).json({ message: 'You are already in this Team' });
+    switch (existingRequest.status) {
+      case 'pending':
+        return next(
+          new ApiError('You already have a pending join request', 400)
+        );
+      case 'accepted':
+        return next(new ApiError('You are already accepted in this team', 400));
+      case 'rejected':
+        // If request was rejected before, allow to create new request
+        await JoinRequest.findByIdAndDelete(existingRequest._id);
+        break;
+      default:
+        // Invalid status, delete the request and allow to create new one
+        await JoinRequest.findByIdAndDelete(existingRequest._id);
+        break;
     }
   }
 
+  // 5) Create new join request
   const joinRequest = await JoinRequest.create({
     user: userId,
     team: team._id,
-    job: req.body.job,
+    job,
     status: 'pending',
+    requestedAt: Date.now(),
   });
 
-  res.status(201).json({ message: 'Join request sent', data: joinRequest });
+  // 6) Get populated request for response
+  const populatedRequest = await JoinRequest.findById(joinRequest._id)
+    .select('-__v -updatedAt')
+    .populate('user', 'name email')
+    .populate('team', 'name teamCode');
+
+  res.status(201).json({
+    status: 'success',
+    message: 'Join request sent successfully',
+    data: populatedRequest,
+  });
 });
 
 /**
@@ -133,53 +175,26 @@ const getSpecificJoinRequest = asyncHandler(async (req, res, next) => {
  * }
  */
 const acceptJoinRequest = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
+  const request = req.joinRequest;
 
-  // Populate createdTeam before using it
-  await req.user.populate({
-    path: 'createdTeam',
-    select: '_id',
-  });
-
-  // 1) Get the request with populated data
-  const request = await JoinRequest.findById(id)
-    .populate('team', 'name members')
-    .populate('user', 'name teams');
-
-  if (!request) {
-    return next(new ApiError('Join request not found', 404));
-  }
-
-  // 2) Early authorization check
+  // Early authorization check
   if (!request.team._id.equals(req.user.createdTeam._id)) {
     return next(
       new ApiError('You are not authorized to accept this request', 403)
     );
   }
 
-  // 3) Validate request status
-  if (request.status !== 'pending') {
-    return next(new ApiError('This request is not pending', 400));
-  }
-
-  // 4) Check if user is already a member
-  if (
-    request.team.members.some(member => member.user.equals(request.user._id))
-  ) {
-    return next(new ApiError('User already a member of the team', 400));
-  }
-
-  // 5) Update request status
   request.status = 'accepted';
   request.responseAt = Date.now();
   request.responseBy = req.user._id;
   await request.save();
 
-  // 6) Add user to team and update user's teams
-  await request.team.addMember(request.user._id, request.job);
-  await request.user.addTeam(request.team._id);
+  const team = await Team.findById(request.team._id);
+  await team.addMember(request.user._id, request.job);
 
-  // 7) Get final populated data for response
+  const user = await User.findById(request.user._id);
+  await user.addTeam(request.team._id);
+
   const populatedRequest = await JoinRequest.findById(request._id)
     .select('-__v -createdAt -updatedAt')
     .populate('responseBy', 'name role')
@@ -207,39 +222,19 @@ const acceptJoinRequest = asyncHandler(async (req, res, next) => {
  * @returns { message: string }
  */
 const rejectJoinRequest = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
+  const request = req.joinRequest;
 
-  await req.user.populate({
-    path: 'createdTeam',
-    select: '_id',
-  });
-
-  // 1) Get the request
-  const request = await JoinRequest.findById(id).populate({
-    path: 'user',
-    select: 'name email profileImage',
-  });
-
-  if (!request) {
-    return next(new ApiError('Join request not found', 404));
-  }
-
-  // 2) Check if user is team leader
-  if (!request.team.equals(req.user.createdTeam._id)) {
+  if (!request.team._id.equals(req.user.createdTeam._id)) {
     return next(
-      new ApiError('You are not authorized to accept this request', 403)
+      new ApiError('You are not authorized to reject this request', 403)
     );
   }
 
-  // 3) Check if request is pending
-  if (request.status !== 'pending') {
-    return next(new ApiError('This request is not pending', 400));
-  }
-  // 4) Update request status
   request.status = 'rejected';
   request.responseAt = Date.now();
   request.responseBy = req.user._id;
   await request.save();
+
   res.status(200).json({
     message: 'success',
   });

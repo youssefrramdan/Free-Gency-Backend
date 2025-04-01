@@ -3,6 +3,44 @@ import Team from '../models/team.model.js';
 import ApiError from '../utils/apiError.js';
 import User from '../models/user.model.js';
 
+// ==========================================
+// Public Team Operations
+// ==========================================
+
+/**
+ * @desc    Get all teams
+ * @route   GET /api/v1/teams
+ * @access  Public
+ */
+const getAllTeams = asyncHandler(async (req, res, next) => {
+  const teams = await Team.find({});
+  res.status(200).json({
+    message: 'success',
+    data: teams,
+  });
+});
+
+/**
+ * @desc    Get specific team by ID
+ * @route   GET /api/v1/teams/:id
+ * @access  Public
+ */
+const getSpecificTeam = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const team = await Team.findById(id);
+  if (!team) {
+    return next(new ApiError(`There isn't a team with this id: ${id}`, 404));
+  }
+  res.status(200).json({
+    message: 'success',
+    data: team,
+  });
+});
+
+// ==========================================
+// Team Creation & Management
+// ==========================================
+
 /**
  * @desc    Create new team
  * @route   POST /api/v1/teams
@@ -49,45 +87,29 @@ const createTeam = asyncHandler(async (req, res, next) => {
 });
 
 /**
- * @desc    Get all teams
- * @route   GET /api/v1/teams
- * @access  Public
+ * @desc    Update logged in user's team
+ * @route   PUT /api/v1/teams/my-team
+ * @access  Private/Team Leader
  */
-const getAllTeams = asyncHandler(async (req, res, next) => {
-  const teams = await Team.find({});
-  res.status(200).json({
-    message: 'success',
-    data: teams,
-  });
-});
-
-/**
- * @desc    Get specific team by ID
- * @route   GET /api/v1/teams/:id
- * @access  Public
- */
-const getSpecificTeam = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const team = await Team.findById(id);
-  if (!team) {
-    return next(new ApiError(`There isn't a team with this id: ${id}`, 404));
-  }
-  res.status(200).json({
-    message: 'success',
-    data: team,
-  });
-});
-
-/**
- * @desc    Get logged in user's team
- * @route   GET /api/v1/teams/my-team
- * @access  Private/Authenticated
- */
-const getMyTeam = asyncHandler(async (req, res, next) => {
+const updateMyTeam = asyncHandler(async (req, res, next) => {
   const team = await Team.findOne({ teamLeader: req.user._id });
   if (!team) {
-    return next(new ApiError('You do not have a team', 404));
+    return next(new ApiError('You do not have a team to update', 404));
   }
+
+  // Fields allowed to be updated
+  const allowedFields = ['name', 'aboutUs', 'status', 'contactInfo'];
+
+  // Update only allowed fields
+  Object.keys(req.body).forEach(key => {
+    if (allowedFields.includes(key)) {
+      team[key] = req.body[key];
+    }
+  });
+
+  // Save the updated team
+  await team.save();
+
   res.status(200).json({
     message: 'success',
     data: team,
@@ -119,35 +141,160 @@ const deleteMyTeam = asyncHandler(async (req, res, next) => {
   });
 });
 
+// ==========================================
+// Team Queries
+// ==========================================
+
 /**
- * @desc    Update logged in user's team
- * @route   PUT /api/v1/teams/my-team
- * @access  Private/Team Leader
+ * @desc    Get team where user is a team leader
+ * @route   GET /api/v1/teams/my-team
+ * @access  Private/Authenticated
  */
-const updateMyTeam = asyncHandler(async (req, res, next) => {
+const getMyTeam = asyncHandler(async (req, res, next) => {
   const team = await Team.findOne({ teamLeader: req.user._id });
   if (!team) {
-    return next(new ApiError('You do not have a team to update', 404));
+    return next(new ApiError('You do not have a team', 404));
   }
-
-  // Fields allowed to be updated
-  const allowedFields = ['name', 'aboutUs', 'status', 'contactInfo'];
-
-  // Update only allowed fields
-  Object.keys(req.body).forEach(key => {
-    if (allowedFields.includes(key)) {
-      team[key] = req.body[key];
-    }
-  });
-
-  // Save the updated team
-  await team.save();
-
   res.status(200).json({
     message: 'success',
     data: team,
   });
 });
+
+/**
+ * @desc    Get all teams where user is a member or team leader
+ * @route   GET /api/v1/teams/my-teams
+ * @access  Private/Authenticated
+ * @returns {
+ *   status: string,
+ *   data: {
+ *     asLeader: Array, // Teams where user is a team leader
+ *     asMember: Array  // Teams where user is a member
+ *   }
+ * }
+ */
+const getMyTeams = asyncHandler(async (req, res, next) => {
+  const userId = req.user._id;
+
+  // Get teams where user is a team leader
+  const asLeader = await Team.find({ teamLeader: userId })
+    .select('_id name category')
+    .populate('category', 'name');
+
+  // Get teams where user is a member (excluding teams where user is leader)
+  const asMember = await Team.find({
+    'members.user': userId,
+    teamLeader: { $ne: userId },
+  })
+    .select('_id name category')
+    .populate('category', 'name');
+
+  res.status(200).json({
+    status: 'success',
+    total: asLeader.length + asMember.length,
+    data: {
+      asLeader,
+      asMember,
+    },
+  });
+});
+
+// ==========================================
+// Team Members Management
+// ==========================================
+
+/**
+ * @desc    Get all team members
+ * @route   GET /api/v1/teams/my-team/members
+ * @access  Private/Team Leader
+ */
+const getTeamMembers = asyncHandler(async (req, res, next) => {
+  const team = await Team.findById(req.user.createdTeam._id).populate(
+    'members.user',
+    'name profileImage'
+  );
+
+  if (!team) {
+    return next(new ApiError('Team not found', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: team.members,
+  });
+});
+
+/**
+ * @desc    Update team member role
+ * @route   PATCH /api/v1/teams/my-team/members/:memberId/role
+ * @access  Private/Team Leader
+ */
+const updateTeamMemberRole = asyncHandler(async (req, res, next) => {
+  const { memberId } = req.params;
+  const { role } = req.body;
+
+  const team = await Team.findById(req.user.createdTeam._id);
+  if (!team) {
+    return next(new ApiError('Team not found Or you didnt a team leader', 404));
+  }
+
+  const member = team.members.id(memberId);
+  if (!member) {
+    return next(new ApiError('Member not found', 404));
+  }
+
+  member.role = role;
+  await team.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: team.members,
+  });
+});
+
+/**
+ * @desc    Remove team member
+ * @route   DELETE /api/v1/teams/my-team/members/:memberId
+ * @access  Private/Team Leader
+ */
+const removeTeamMember = asyncHandler(async (req, res, next) => {
+  const { memberId } = req.params;
+
+  const team = await Team.findById(req.user.createdTeam._id);
+
+  if (!team) {
+    return next(new ApiError('Team not found Or you didnt a team leader', 404));
+  }
+  // Prevent removing team leader
+  const member = team.members.id(memberId);
+  if (!member) {
+    return next(new ApiError('Member not found', 404));
+  }
+
+  if (member.role === 'teamLeader') {
+    return next(new ApiError('Cannot remove team leader', 400));
+  }
+
+  // Get user before removing from team
+  const userId = member.user;
+
+  // Remove member from team's members array
+  team.members = team.members.filter(m => m._id.toString() !== memberId);
+  await team.save();
+
+  // Remove team from user's teams array
+  await User.findByIdAndUpdate(userId, {
+    $pull: { teams: team._id },
+  });
+
+  res.status(200).json({
+    message: 'success',
+  });
+});
+
+// ==========================================
+// Team Projects Management
+// ==========================================
 
 /**
  * @desc    Add a new lasted project to team
@@ -258,6 +405,47 @@ const deleteLastedProject = asyncHandler(async (req, res, next) => {
   });
 });
 
+// ==========================================
+// Team Statistics
+// ==========================================
+
+/**
+ * @desc    Get team statistics
+ * @route   GET /api/v1/teams/my-team/statistics
+ * @access  Private/Team Leader
+ */
+const getTeamStatistics = asyncHandler(async (req, res, next) => {
+  // Populate createdTeam before using it
+  await req.user.populate({
+    path: 'createdTeam',
+    select: '_id',
+  });
+
+  const team = await Team.findById(req.user.createdTeam._id);
+  if (!team) {
+    return next(new ApiError('Team not found', 404));
+  }
+
+  const statistics = {
+    totalMembers: team.members.length,
+    totalProjects: team.lastedProjects.length,
+    memberRoles: {
+      teamLeader: team.members.filter(m => m.role === 'teamLeader').length,
+      teamMember: team.members.filter(m => m.role === 'teamMember').length,
+      admin: team.members.filter(m => m.role === 'admin').length,
+    },
+  };
+
+  res.status(200).json({
+    status: 'success',
+    data: statistics,
+  });
+});
+
+// ==========================================
+// Admin Operations
+// ==========================================
+
 /**
  * @desc    Delete specific team by admin
  * @route   DELETE /api/v1/teams/:id
@@ -295,133 +483,12 @@ const deleteTeam = asyncHandler(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    Get all team members
- * @route   GET /api/v1/teams/my-team/members
- * @access  Private/Team Leader
- */
-const getTeamMembers = asyncHandler(async (req, res, next) => {
-  const team = await Team.findById(req.user.createdTeam._id).populate(
-    'members.user',
-    'name profileImage'
-  );
-
-  if (!team) {
-    return next(new ApiError('Team not found', 404));
-  }
-
-  res.status(200).json({
-    status: 'success',
-    data: team.members,
-  });
-});
-
-/**
- * @desc    Update team member role
- * @route   PATCH /api/v1/teams/my-team/members/:memberId/role
- * @access  Private/Team Leader
- */
-const updateTeamMemberRole = asyncHandler(async (req, res, next) => {
-  const { memberId } = req.params;
-  const { role } = req.body;
-
-  const team = await Team.findById(req.user.createdTeam._id);
-  if (!team) {
-    return next(new ApiError('Team not found Or you didnt a team leader', 404));
-  }
-
-  const member = team.members.id(memberId);
-  if (!member) {
-    return next(new ApiError('Member not found', 404));
-  }
-
-  member.role = role;
-  await team.save();
-
-  res.status(200).json({
-    status: 'success',
-    data: team.members,
-  });
-});
-
-/**
- * @desc    Remove team member
- * @route   DELETE /api/v1/teams/my-team/members/:memberId
- * @access  Private/Team Leader
- */
-const removeTeamMember = asyncHandler(async (req, res, next) => {
-  const { memberId } = req.params;
-
-  const team = await Team.findById(req.user.createdTeam._id);
-
-  if (!team) {
-    return next(new ApiError('Team not found Or you didnt a team leader', 404));
-  }
-  // Prevent removing team leader
-  const member = team.members.id(memberId);
-  if (!member) {
-    return next(new ApiError('Member not found', 404));
-  }
-
-  if (member.role === 'teamLeader') {
-    return next(new ApiError('Cannot remove team leader', 400));
-  }
-
-  // Get user before removing from team
-  const userId = member.user;
-
-  // Remove member from team's members array
-  team.members = team.members.filter(m => m._id.toString() !== memberId);
-  await team.save();
-
-  // Remove team from user's teams array
-  await User.findByIdAndUpdate(userId, {
-    $pull: { teams: team._id },
-  });
-
-  res.status(200).json({
-    message: 'success',
-  });
-});
-
-/**
- * @desc    Get team statistics
- * @route   GET /api/v1/teams/my-team/statistics
- * @access  Private/Team Leader
- */
-const getTeamStatistics = asyncHandler(async (req, res, next) => {
-  // Populate createdTeam before using it
-  await req.user.populate({
-    path: 'createdTeam',
-    select: '_id',
-  });
-
-  const team = await Team.findById(req.user.createdTeam._id);
-  if (!team) {
-    return next(new ApiError('Team not found', 404));
-  }
-
-  const statistics = {
-    totalMembers: team.members.length,
-    totalProjects: team.lastedProjects.length,
-    memberRoles: {
-      teamLeader: team.members.filter(m => m.role === 'teamLeader').length,
-      teamMember: team.members.filter(m => m.role === 'teamMember').length,
-      admin: team.members.filter(m => m.role === 'admin').length,
-    },
-  };
-
-  res.status(200).json({
-    status: 'success',
-    data: statistics,
-  });
-});
-
 export {
   createTeam,
   getAllTeams,
   getSpecificTeam,
   getMyTeam,
+  getMyTeams,
   deleteMyTeam,
   updateMyTeam,
   addLastedProject,

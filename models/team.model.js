@@ -124,23 +124,6 @@ const teamSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-// // Middleware للتحقق من صحة كود الفريق
-// teamSchema.pre(/^find/, function (next) {
-//   this.populate({
-//     path: 'teamLeader',
-//     select: 'name email profileImage',
-//   });
-//   next();
-// });
-
-// // Virtual للمشاريع النشطة
-// teamSchema.virtual('activeProjects', {
-//   ref: 'Project',
-//   localField: 'projects',
-//   foreignField: '_id',
-//   match: { status: 'active' },
-// });
-
 
 // Indexes للأداء الأفضل
 teamSchema.index({ teamLeader: 1 });

@@ -59,17 +59,9 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-// Populate createdTeam and interests before any find query
+// Remove interests population from pre-find middleware
 userSchema.pre(/^find/, function (next) {
-  this.populate({
-    path: 'createdTeam',
-    select: 'name teamCode',
-  })
-    .populate({
-      path: 'interests',
-      select: 'name id',
-    })
-    .select('-__v -createdAt -updatedAt');
+  this.select('-__v -createdAt -updatedAt');
   next();
 });
 
@@ -88,14 +80,6 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   }
   return await bcrypt.compare(candidatePassword, this.password);
 };
-
-// Ensure team leaders always have 'team_leader' role
-userSchema.pre('save', function (next) {
-  if (this.createdTeam && this.role !== 'team_leader') {
-    this.role = 'team_leader';
-  }
-  next();
-});
 
 // Indexes for performance
 userSchema.index({ email: 1 });

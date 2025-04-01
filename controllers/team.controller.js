@@ -110,8 +110,12 @@ const deleteMyTeam = asyncHandler(async (req, res, next) => {
     $unset: { createdTeam: 1 },
   });
 
-  res.status(200).json({
-    message: 'Team deleted successfully',
+  // Remove team from all users' teams array
+  await User.updateMany({ teams: team._id }, { $pull: { teams: team._id } });
+
+  res.status(204).json({
+    status: 'success',
+    data: null,
   });
 });
 
@@ -265,6 +269,14 @@ const deleteTeam = asyncHandler(async (req, res, next) => {
   if (!team) {
     return next(new ApiError(`There isn't a team with this id: ${id}`, 404));
   }
+
+  // Remove team reference from team leader's schema
+  await User.findByIdAndUpdate(team.teamLeader, {
+    $unset: { createdTeam: 1 },
+  });
+
+  // Remove team from all users' teams array
+  await User.updateMany({ teams: team._id }, { $pull: { teams: team._id } });
 
   res.status(200).json({
     message: 'Team deleted successfully',

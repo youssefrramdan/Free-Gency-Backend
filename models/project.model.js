@@ -30,26 +30,6 @@ const projectSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Team',
     },
-    teamRequests: [
-      {
-        team: {
-          type: mongoose.Schema.ObjectId,
-          ref: 'Team',
-        },
-        status: {
-          type: String,
-          enum: ['pending', 'accepted', 'rejected'],
-          default: 'pending',
-        },
-        requestDate: {
-          type: Date,
-          default: Date.now,
-        },
-        responseDate: {
-          type: Date,
-        },
-      },
-    ],
     projectDetails: [
       {
         fileName: String,
@@ -73,6 +53,26 @@ const projectSchema = new mongoose.Schema(
         changedAt: {
           type: Date,
           default: Date.now,
+        },
+      },
+    ],
+    teamRequests: [
+      {
+        team: {
+          type: mongoose.Schema.ObjectId,
+          ref: 'Team',
+        },
+        status: {
+          type: String,
+          enum: ['pending', 'accepted', 'rejected'],
+          default: 'pending',
+        },
+        requestDate: {
+          type: Date,
+          default: Date.now,
+        },
+        responseDate: {
+          type: Date,
         },
       },
     ],

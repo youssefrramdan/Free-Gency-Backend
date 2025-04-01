@@ -37,7 +37,10 @@ const createUser = asyncHandler(async (req, res, next) => {
  * @access  Private
  */
 const getUser = asyncHandler(async (req, res, next) => {
-  const user = await User.findById(req.params.id);
+  const user = await User.findById(req.params.id).populate({
+    path: 'interests',
+    select: 'name image status',
+  });
   if (!user) {
     return next(new Error('User not found', 404));
   }
@@ -53,7 +56,10 @@ const getUser = asyncHandler(async (req, res, next) => {
  * @access  Private/Admin
  */
 const getAllUsers = asyncHandler(async (req, res, next) => {
-  const users = await User.find()
+  const users = await User.find().populate({
+    path: 'interests',
+    select: 'name image status',
+  });
   res.status(200).json({
     message: 'success',
     users,
@@ -100,7 +106,10 @@ const deleteUser = asyncHandler(async (req, res, next) => {
  * @access  Private
  */
 const getMe = asyncHandler(async (req, res, next) => {
-  const user = await User.findById(req.user._id)
+  const user = await User.findById(req.user._id).populate({
+    path: 'interests',
+    select: 'name image status',
+  });
   res.status(200).json({
     message: 'success',
     user,

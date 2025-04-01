@@ -104,7 +104,10 @@ const getAllMyTeamJoinRequests = asyncHandler(async (req, res, next) => {
  */
 const getSpecificJoinRequest = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
-  const request = await JoinRequest.findById(id);
+  const request = await JoinRequest.findById(id).populate({
+    path: 'user',
+    select: 'name email profileImage',
+  });
   if (!request) {
     return next(new ApiError(`There isnt any request for this ${id}`, 404));
   }
@@ -131,6 +134,12 @@ const getSpecificJoinRequest = asyncHandler(async (req, res, next) => {
  */
 const acceptJoinRequest = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
+
+  // Populate createdTeam before using it
+  await req.user.populate({
+    path: 'createdTeam',
+    select: '_id',
+  });
 
   // 1) Get the request with populated data
   const request = await JoinRequest.findById(id)
@@ -166,46 +175,26 @@ const acceptJoinRequest = asyncHandler(async (req, res, next) => {
   request.responseBy = req.user._id;
   await request.save();
 
-  // 6) Update team members
-  request.team.members.push({
-    user: request.user._id,
-    role: 'Team_member',
-    job: request.job,
-    joinedAt: Date.now(),
-  });
-  await request.team.save();
+  // 6) Add user to team and update user's teams
+  await request.team.addMember(request.user._id, request.job);
+  await request.user.addTeam(request.team._id);
 
-  // 7) Update user's teams
-  request.user.teams.push(request.team._id);
-  await request.user.save();
-
-  // 8) Get final populated data for response
+  // 7) Get final populated data for response
   const populatedRequest = await JoinRequest.findById(request._id)
     .select('-__v -createdAt -updatedAt')
     .populate('responseBy', 'name role')
-    .populate('user', 'name')
-    .populate('team', 'name');
+    .populate('user', 'name');
 
   res.status(200).json({
-    status: 'success',
-    message: 'Join request accepted successfully',
+    message: 'success',
     data: {
-      request: {
-        id: populatedRequest._id,
-        status: populatedRequest.status,
-        job: populatedRequest.job,
-        requestedAt: populatedRequest.requestedAt,
-        responseAt: populatedRequest.responseAt,
-        responseBy: populatedRequest.responseBy,
-      },
-      team: {
-        id: populatedRequest.team._id,
-        name: populatedRequest.team.name,
-      },
-      user: {
-        id: populatedRequest.user._id,
-        name: populatedRequest.user.name,
-      },
+      id: populatedRequest._id,
+      name: populatedRequest.user.name,
+      status: populatedRequest.status,
+      job: populatedRequest.job,
+      requestedAt: populatedRequest.requestedAt,
+      responseAt: populatedRequest.responseAt,
+      responseBy: populatedRequest.responseBy,
     },
   });
 });
@@ -220,8 +209,16 @@ const acceptJoinRequest = asyncHandler(async (req, res, next) => {
 const rejectJoinRequest = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
+  await req.user.populate({
+    path: 'createdTeam',
+    select: '_id',
+  });
+
   // 1) Get the request
-  const request = await JoinRequest.findById(id);
+  const request = await JoinRequest.findById(id).populate({
+    path: 'user',
+    select: 'name email profileImage',
+  });
 
   if (!request) {
     return next(new ApiError('Join request not found', 404));
@@ -259,7 +256,10 @@ const deleteJoinRequest = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
   // 1) Get the request
-  const request = await JoinRequest.findById(id);
+  const request = await JoinRequest.findById(id).populate({
+    path: 'user',
+    select: 'name email profileImage',
+  });
   if (!request) {
     return next(new ApiError('Join request not found', 404));
   }

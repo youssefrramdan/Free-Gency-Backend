@@ -81,6 +81,13 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
+// Add method for updating user teams
+userSchema.methods.addTeam = async function (teamId) {
+  this.teams.push(teamId);
+  this.role = 'team_member';
+  await this.save();
+};
+
 // Indexes for performance
 userSchema.index({ email: 1 });
 userSchema.index({ createdTeam: 1 });

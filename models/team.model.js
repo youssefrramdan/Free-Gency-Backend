@@ -130,5 +130,16 @@ teamSchema.index({ teamLeader: 1 });
 teamSchema.index({ category: 1 });
 teamSchema.index({ status: 1 });
 
+// Add methods for team member operations
+teamSchema.methods.addMember = async function (userId, job) {
+  this.members.push({
+    user: userId,
+    role: 'Team_member',
+    job,
+    joinedAt: Date.now(),
+  });
+  await this.save();
+};
+
 const Team = mongoose.model('Team', teamSchema);
 export default Team;

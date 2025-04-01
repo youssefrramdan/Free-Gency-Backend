@@ -279,7 +279,7 @@ const deleteTeam = asyncHandler(async (req, res, next) => {
 const getTeamMembers = asyncHandler(async (req, res, next) => {
   const team = await Team.findById(req.user.createdTeam._id).populate(
     'members.user',
-    'name email profileImage role'
+    'name profileImage'
   );
 
   if (!team) {
@@ -303,7 +303,7 @@ const updateTeamMemberRole = asyncHandler(async (req, res, next) => {
 
   const team = await Team.findById(req.user.createdTeam._id);
   if (!team) {
-    return next(new ApiError('Team not found', 404));
+    return next(new ApiError('Team not found Or you didnt a team leader', 404));
   }
 
   const member = team.members.id(memberId);
@@ -329,28 +329,34 @@ const removeTeamMember = asyncHandler(async (req, res, next) => {
   const { memberId } = req.params;
 
   const team = await Team.findById(req.user.createdTeam._id);
-  if (!team) {
-    return next(new ApiError('Team not found', 404));
-  }
 
+  if (!team) {
+    return next(new ApiError('Team not found Or you didnt a team leader', 404));
+  }
+  // Prevent removing team leader
   const member = team.members.id(memberId);
   if (!member) {
     return next(new ApiError('Member not found', 404));
   }
 
-  // Remove member from team
-  member.remove();
-  await team.save();
-
-  // Remove team from user's teams
-  const user = await User.findById(member.user);
-  if (user) {
-    user.teams = user.teams.filter(teamId => !teamId.equals(team._id));
-    await user.save();
+  if (member.role === 'Team_leader') {
+    return next(new ApiError('Cannot remove team leader', 400));
   }
 
-  res.status(204).json({
-    status: 'success',
+  // Get user before removing from team
+  const userId = member.user;
+
+  // Remove member from team's members array
+  team.members = team.members.filter(m => m._id.toString() !== memberId);
+  await team.save();
+
+  // Remove team from user's teams array
+  await User.findByIdAndUpdate(userId, {
+    $pull: { teams: team._id },
+  });
+
+  res.status(200).json({
+    message: 'success',
   });
 });
 
@@ -360,6 +366,12 @@ const removeTeamMember = asyncHandler(async (req, res, next) => {
  * @access  Private/Team Leader
  */
 const getTeamStatistics = asyncHandler(async (req, res, next) => {
+  // Populate createdTeam before using it
+  await req.user.populate({
+    path: 'createdTeam',
+    select: '_id',
+  });
+
   const team = await Team.findById(req.user.createdTeam._id);
   if (!team) {
     return next(new ApiError('Team not found', 404));

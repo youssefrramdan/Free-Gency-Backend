@@ -37,5 +37,8 @@ const joinRequestSchema = new mongoose.Schema(
   }
 );
 
+// Add compound index for user and team fields
+joinRequestSchema.index({ user: 1, team: 1 }, { unique: true });
+
 const JoinRequest = mongoose.model('JoinRequest', joinRequestSchema);
 export default JoinRequest;

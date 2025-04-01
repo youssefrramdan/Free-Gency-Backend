@@ -2,8 +2,14 @@ import asyncHandler from 'express-async-handler';
 import Team from '../models/team.model.js';
 import JoinRequest from '../models/JoinRequest.model.js';
 import ApiError from '../utils/apiError.js';
-import User from '../models/user.model.js';
 
+/**
+ * @desc    Create a new request to join a team
+ * @route   POST /api/v1/teams/join
+ * @access  Private
+ * @body    { teamCode: string, job: string }
+ * @returns { message: string, data: JoinRequest }
+ */
 const CreaterequestToJoinTeam = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
   const { teamCode } = req.body;
@@ -37,9 +43,17 @@ const CreaterequestToJoinTeam = asyncHandler(async (req, res, next) => {
 });
 
 /**
- * @desc    Get all join requests for a team
- * @route   GET /api/v1/join-requests/team
+ * @desc    Get all join requests for the team leader's team
+ * @route   GET /api/v1/teams/requests
  * @access  Private/Team Leader
+ * @returns {
+ *   status: string,
+ *   data: {
+ *     pending: { count: number, requests: Array },
+ *     rejected: { count: number, requests: Array },
+ *     accepted: { count: number, requests: Array }
+ *   }
+ * }
  */
 const getAllMyTeamJoinRequests = asyncHandler(async (req, res, next) => {
   // Check if user has a team
@@ -81,6 +95,13 @@ const getAllMyTeamJoinRequests = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Get a specific join request by ID
+ * @route   GET /api/v1/teams/requests/:id
+ * @access  Private
+ * @param   {string} id - Join request ID
+ * @returns { message: string, data: JoinRequest }
+ */
 const getSpecificJoinRequest = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const request = await JoinRequest.findById(id);
@@ -95,82 +116,107 @@ const getSpecificJoinRequest = asyncHandler(async (req, res, next) => {
 
 /**
  * @desc    Accept a join request
- * @route   PATCH /api/v1/join-requests/:requestId/accept
+ * @route   PATCH /api/v1/teams/requests/:id/accept
  * @access  Private/Team Leader
+ * @param   {string} id - Join request ID
+ * @returns {
+ *   status: string,
+ *   message: string,
+ *   data: {
+ *     request: Object,
+ *     team: Object,
+ *     user: Object
+ *   }
+ * }
  */
 const acceptJoinRequest = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
-  // 1) Get the request
-  const request = await JoinRequest.findById(id);
+  // 1) Get the request with populated data
+  const request = await JoinRequest.findById(id)
+    .populate('team', 'name members')
+    .populate('user', 'name teams');
 
   if (!request) {
     return next(new ApiError('Join request not found', 404));
   }
 
-  // 2) Check if user is team leader
-  if (!request.team.equals(req.user.createdTeam._id)) {
+  // 2) Early authorization check
+  if (!request.team._id.equals(req.user.createdTeam._id)) {
     return next(
       new ApiError('You are not authorized to accept this request', 403)
     );
   }
 
-  // 3) Check if request is pending
+  // 3) Validate request status
   if (request.status !== 'pending') {
     return next(new ApiError('This request is not pending', 400));
   }
 
-  // 4) Update request status
+  // 4) Check if user is already a member
+  if (
+    request.team.members.some(member => member.user.equals(request.user._id))
+  ) {
+    return next(new ApiError('User already a member of the team', 400));
+  }
+
+  // 5) Update request status
   request.status = 'accepted';
   request.responseAt = Date.now();
   request.responseBy = req.user._id;
   await request.save();
 
-  // 5) Update team members
-  const team = await Team.findById(request.team);
-  if (!team) {
-    return next(new ApiError('Team not found', 404));
-  }
-
-  team.members.push({
-    user: request.user,
+  // 6) Update team members
+  request.team.members.push({
+    user: request.user._id,
     role: 'Team_member',
     job: request.job,
     joinedAt: Date.now(),
   });
-  await team.save();
+  await request.team.save();
 
-  // 6) Update user's teams
-  const user = await User.findById(request.user);
-  if (!user) {
-    return next(new ApiError('User not found', 404));
-  }
+  // 7) Update user's teams
+  request.user.teams.push(request.team._id);
+  await request.user.save();
 
-  user.teams.push(request.team);
-  await user.save();
-
-  // 7) Send response
+  // 8) Get final populated data for response
   const populatedRequest = await JoinRequest.findById(request._id)
     .select('-__v -createdAt -updatedAt')
-    .populate('responseBy', 'name role');
+    .populate('responseBy', 'name role')
+    .populate('user', 'name')
+    .populate('team', 'name');
 
   res.status(200).json({
     status: 'success',
     message: 'Join request accepted successfully',
     data: {
-      request: populatedRequest,
+      request: {
+        id: populatedRequest._id,
+        status: populatedRequest.status,
+        job: populatedRequest.job,
+        requestedAt: populatedRequest.requestedAt,
+        responseAt: populatedRequest.responseAt,
+        responseBy: populatedRequest.responseBy,
+      },
       team: {
-        id: team._id,
-        name: team.name,
+        id: populatedRequest.team._id,
+        name: populatedRequest.team.name,
       },
       user: {
-        id: user._id,
-        name: user.name,
+        id: populatedRequest.user._id,
+        name: populatedRequest.user.name,
       },
     },
   });
 });
 
+/**
+ * @desc    Reject a join request
+ * @route   PATCH /api/v1/teams/requests/:id/reject
+ * @access  Private/Team Leader
+ * @param   {string} id - Join request ID
+ * @returns { message: string }
+ */
 const rejectJoinRequest = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
@@ -206,6 +252,8 @@ const rejectJoinRequest = asyncHandler(async (req, res, next) => {
  * @desc    Delete a join request
  * @route   DELETE /api/v1/teams/requests/:id
  * @access  Private/Team Leader
+ * @param   {string} id - Join request ID
+ * @returns { message: string }
  */
 const deleteJoinRequest = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
@@ -227,7 +275,7 @@ const deleteJoinRequest = asyncHandler(async (req, res, next) => {
   await JoinRequest.findByIdAndDelete(id);
 
   res.status(204).json({
-    status: 'success',
+    message: 'success',
   });
 });
 

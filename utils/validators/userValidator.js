@@ -2,6 +2,7 @@ import { check } from 'express-validator';
 import asyncHandler from 'express-async-handler';
 import validatorMiddleware from '../../middlewares/validatorMiddleware.js';
 import User from '../../models/user.model.js';
+import Category from '../../models/category.model.js';
 
 /**
  * @description  Validate User Creation
@@ -162,6 +163,20 @@ const updateMeValidator = [
     .optional()
     .isLength({ max: 500 })
     .withMessage('Bio cannot exceed 500 characters'),
+
+  check('interests')
+    .optional()
+    .isArray()
+    .withMessage('Interests must be an array')
+    .custom(async val => {
+      if (val && val.length > 0) {
+        const categories = await Category.find({ _id: { $in: val } });
+        if (categories.length !== val.length) {
+          throw new Error('One or more interests are invalid');
+        }
+      }
+      return true;
+    }),
 
   validatorMiddleware,
 ];

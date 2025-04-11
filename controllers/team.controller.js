@@ -176,18 +176,18 @@ const getMyTeam = asyncHandler(async (req, res, next) => {
 const getMyTeams = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
 
-  // Get teams where user is a team leader
-  const asLeader = await Team.find({ teamLeader: userId })
-    .select('_id name category')
-    .populate('category', 'name');
-
-  // Get teams where user is a member (excluding teams where user is leader)
-  const asMember = await Team.find({
-    'members.user': userId,
-    teamLeader: { $ne: userId },
-  })
-    .select('_id name category')
-    .populate('category', 'name');
+  // Execute both queries in parallel using Promise.all
+  const [asLeader, asMember] = await Promise.all([
+    Team.find({ teamLeader: userId })
+      .select('_id name category')
+      .populate('category', 'name'),
+    Team.find({
+      'members.user': userId,
+      teamLeader: { $ne: userId },
+    })
+      .select('_id name category members')
+      .populate('category', 'name'),
+  ]);
 
   res.status(200).json({
     status: 'success',

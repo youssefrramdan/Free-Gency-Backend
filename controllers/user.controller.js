@@ -122,10 +122,20 @@ const getMe = asyncHandler(async (req, res, next) => {
  * @access  Private
  */
 const updateMe = asyncHandler(async (req, res, next) => {
+  // First find the user to verify current state
+  const currentUser = await User.findById(req.user._id);
+  if (!currentUser) {
+    return next(new ApiError('User not found', 404));
+  }
   const user = await User.findByIdAndUpdate(req.user._id, req.body, {
     new: true,
     runValidators: true,
-  }).select('-password -__v -createdAt -updatedAt');
+  })
+    .select('-password -__v -createdAt -updatedAt')
+    .populate({
+      path: 'interests',
+      select: 'name image status',
+    });
 
   res.status(200).json({
     message: 'success',

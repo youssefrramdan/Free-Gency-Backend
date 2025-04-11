@@ -323,6 +323,7 @@ const updateProjectSecurity = asyncHandler(async (req, res, next) => {
  */
 const requestToJoinProject = asyncHandler(async (req, res, next) => {
   const project = await Project.findById(req.params.id);
+
   if (!project) {
     return next(new ApiError('Project not found', 404));
   }
@@ -360,15 +361,18 @@ const requestToJoinProject = asyncHandler(async (req, res, next) => {
  */
 const getProjectRequests = asyncHandler(async (req, res, next) => {
   const project = await Project.findById(req.params.id)
-    .populate('teamRequests.team', 'name category members')
-    .select('teamRequests');
+    .populate('teamRequests.team', 'name category')
 
   if (!project) {
     return next(new ApiError('Project not found', 404));
   }
 
   // Use the helper function
-  isAuthorized(req.user._id, project.client, 'view requests for this project');
+  isAuthorized(
+    req.user._id,
+    project.client,
+    'view requests for this project'
+  );
 
   res.status(200).json({
     message: 'success',

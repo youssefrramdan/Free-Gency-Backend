@@ -75,26 +75,6 @@ const projectSchema = new mongoose.Schema(
         },
       },
     ],
-    teamRequests: [
-      {
-        team: {
-          type: mongoose.Schema.ObjectId,
-          ref: 'Team',
-        },
-        status: {
-          type: String,
-          enum: ['pending', 'accepted', 'rejected'],
-          default: 'pending',
-        },
-        requestDate: {
-          type: Date,
-          default: Date.now,
-        },
-        responseDate: {
-          type: Date,
-        },
-      },
-    ],
     milestones: [
       {
         title: {

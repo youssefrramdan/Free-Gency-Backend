@@ -192,50 +192,6 @@ projectSchema.methods.deleteMilestone = async function (milestoneId, userId) {
   return this.save();
 };
 
-// // Method to assign a team to a project
-// projectSchema.methods.assignTeam = async function (teamId) {
-//   // Check if the team has requested to join the project
-//   const teamRequest = this.teamRequests.find(
-//     request => request.team.equals(teamId) && request.status === 'pending'
-//   );
-
-//   if (!teamRequest) {
-//     throw new Error('Team has not requested to work on this project');
-//   }
-
-//   // Accept the team request and assign the team to the project
-//   teamRequest.status = 'accepted';
-//   teamRequest.responseDate = Date.now();
-//   this.assignedTeam = teamId;
-//   this.status = 'in-progress';
-
-//   // Reject all other pending requests
-//   this.teamRequests.forEach(request => {
-//     if (!request.team.equals(teamId) && request.status === 'pending') {
-//       request.status = 'rejected';
-//       request.responseDate = Date.now();
-//     }
-//   });
-
-//   return this.save();
-// };
-
-// // Method to reject a team request
-// projectSchema.methods.rejectTeamRequest = async function (teamId) {
-//   const teamRequest = this.teamRequests.find(
-//     request => request.team.equals(teamId) && request.status === 'pending'
-//   );
-
-//   if (!teamRequest) {
-//     throw new Error('Team has not requested to work on this project');
-//   }
-
-//   // Reject the team request
-//   teamRequest.status = 'rejected';
-//   teamRequest.responseDate = Date.now();
-
-//   return this.save();
-// };
 
 const Project = mongoose.model('Project', projectSchema);
 export default Project;

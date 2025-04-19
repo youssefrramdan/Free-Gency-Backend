@@ -5,6 +5,8 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './swagger.js';
 import globalError from './middlewares/errorMiddleware.js';
 import ApiError from './utils/apiError.js';
 import userRouter from './routes/user.routes.js';
@@ -45,13 +47,24 @@ if (process.env.NODE_ENV === 'development') {
   console.log(`mode : ${process.env.NODE_ENV}`);
 }
 
+// Swagger UI
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Free Gency API Documentation',
+  })
+);
+
 //mount Routes
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/services', servicesRouter);
 app.use('/api/v1/teams', teamRouter);
-app.use('/api/v1/projects',projectRouter);
+app.use('/api/v1/projects', projectRouter);
 app.get('/ping', (req, res) => {
   res.status(200).send('pong');
 });

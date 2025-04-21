@@ -10,7 +10,8 @@ const options = {
     },
     servers: [
       {
-        url: 'https://free-gency-backend-003bbc67b812.herokuapp.com/api/v1',
+        url: 'https://free-gency-api-v1.onrender.com/api/v1',
+        // url: 'https://free-gency-backend-003bbc67b812.herokuapp.com/api/v1',
         description: 'Production server',
       },
       {

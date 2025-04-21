@@ -105,7 +105,10 @@ const login = asyncHandler(async (req, res, next) => {
 
   if (!user.isVerified) {
     return next(
-      new ApiError('Your Email is not verified. Please verify your email', 403)
+      new ApiError(
+        `Your Email is not verified. Please verify your email We send email at ${req.body.email}`,
+        403
+      )
     );
   }
 

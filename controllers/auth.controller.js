@@ -103,6 +103,12 @@ const login = asyncHandler(async (req, res, next) => {
     '+password'
   );
 
+  if (!user.isVerified) {
+    return next(
+      new ApiError('Your Email is not verified. Please verify your email', 403)
+    );
+  }
+
   if (!user) {
     return next(new ApiError('Incorrect email or password', 401));
   }
@@ -110,12 +116,6 @@ const login = asyncHandler(async (req, res, next) => {
   const isPasswordCorrect = await user.comparePassword(req.body.password);
   if (!isPasswordCorrect) {
     return next(new ApiError('Incorrect email or password', 401));
-  }
-
-  if (!user.isVerified) {
-    return next(
-      new ApiError('Your Email is not verified. Please verify your email', 403)
-    );
   }
 
   const token = generateToken(user._id);

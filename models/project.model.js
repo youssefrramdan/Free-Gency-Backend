@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-
+// project ----> create or team leader add to profile
 const projectSchema = new mongoose.Schema(
   {
     projectTitle: {
@@ -75,31 +75,6 @@ const projectSchema = new mongoose.Schema(
         },
       },
     ],
-    milestones: [
-      {
-        title: {
-          type: String,
-          required: true,
-          trim: true,
-        },
-        description: {
-          type: String,
-          required: true,
-        },
-        dueDate: {
-          type: Date,
-          required: true,
-        },
-        status: {
-          type: String,
-          enum: ['pending', 'in-progress', 'completed'],
-          default: 'pending',
-        },
-        completedAt: {
-          type: Date,
-        },
-      },
-    ],
   },
   {
     timestamps: true,
@@ -126,71 +101,6 @@ projectSchema.pre('save', function (next) {
   next();
 });
 
-
-// Method to add a new milestone
-projectSchema.methods.addMilestone = async function (milestoneData, userId) {
-  if (!this.isProjectClient(userId)) {
-    throw new Error('Only the project client can add milestones');
-  }
-
-  this.milestones.push({
-    title: milestoneData.title,
-    description: milestoneData.description,
-    dueDate: milestoneData.dueDate,
-    status: 'pending',
-  });
-  return this.save();
-};
-
-// Method to update milestone status
-projectSchema.methods.updateMilestoneStatus = async function (
-  milestoneId,
-  newStatus,
-  userId
-) {
-  const isClient = this.isProjectClient(userId);
-  const isLeader = await this.isTeamLeader(userId);
-
-  if (!isClient && !isLeader) {
-    throw new Error(
-      'Only the project client or team leader can update milestones'
-    );
-  }
-
-  const milestone = this.milestones.id(milestoneId);
-  if (!milestone) {
-    throw new Error('Milestone not found');
-  }
-
-  // Only client can mark as pending
-  if (newStatus === 'pending' && !isClient) {
-    throw new Error('Only the project client can mark milestones as pending');
-  }
-
-  // Only team leader can mark as completed
-  if (newStatus === 'completed' && !isLeader) {
-    throw new Error('Only the team leader can mark milestones as completed');
-  }
-
-  milestone.status = newStatus;
-  if (newStatus === 'completed') {
-    milestone.completedAt = Date.now();
-  }
-
-  return this.save();
-};
-
-// Method to delete a milestone
-projectSchema.methods.deleteMilestone = async function (milestoneId, userId) {
-  if (!this.isProjectClient(userId)) {
-    throw new Error('Only the project client can delete milestones');
-  }
-
-  this.milestones = this.milestones.filter(
-    m => m._id.toString() !== milestoneId
-  );
-  return this.save();
-};
 
 
 const Project = mongoose.model('Project', projectSchema);

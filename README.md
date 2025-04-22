@@ -14,7 +14,7 @@ The project is deployed using **Koyeb** at the following link:
 ### 🌐 Access the Live Application
 
 ```sh
-🔗 https://free-gency-v1.koyeb.app
+🔗 https://free-gency-api-v1.onrender.com
 ```
 
 ### 📩 Postman API Collection

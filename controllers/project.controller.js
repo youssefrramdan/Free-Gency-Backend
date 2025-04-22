@@ -15,12 +15,16 @@ import Team from '../models/team.model.js';
  * @param {string} action - The action being performed (for error message)
  * @returns {boolean} - Returns true if authorized, throws ApiError if not
  */
-export const isAuthorized = (userId, ownerId, action = 'perform this action') => {
-    if (userId.toString() !== ownerId.toString()) {
-      throw new ApiError(`Not authorized to ${action}`, 403);
-    }
-    return true;
-  };
+export const isAuthorized = (
+  userId,
+  ownerId,
+  action = 'perform this action'
+) => {
+  if (userId.toString() !== ownerId.toString()) {
+    throw new ApiError(`Not authorized to ${action}`, 403);
+  }
+  return true;
+};
 
 // ==========================================
 // Middleware
@@ -63,7 +67,10 @@ const createProject = asyncHandler(async (req, res, next) => {
   const requirment = [];
 
   if (req.files && req.files.length > 0) {
-    const newFiles = req.files.map(file => ({ fileName: file.originalname, fileUrl: file.path }));
+    const newFiles = req.files.map(file => ({
+      fileName: file.originalname,
+      fileUrl: file.path,
+    }));
     requirment.push(...newFiles);
   }
 
@@ -98,7 +105,7 @@ const getAllProject = asyncHandler(async (req, res, next) => {
 
   if (role === 'client') {
     const user = await User.findById(req.user._id).select('interests');
-    if (user && user.interests && user.interests.length > 0) {
+    if (user?.interests?.length > 0) {
       filter = { ...filter, category: { $in: user.interests } };
     }
   } else if (role === 'teamLeader') {
@@ -298,165 +305,6 @@ const updateProjectSecurity = asyncHandler(async (req, res, next) => {
   });
 });
 
-// ==========================================
-// Project Requests Management
-// ==========================================
-
-/**
- * @desc    Request to join project
- * @route   POST /api/v1/projects/:id/requests
- * @access  Private/Team Leader
- */
-const requestToJoinProject = asyncHandler(async (req, res, next) => {
-  const project = await Project.findById(req.params.id);
-
-  if (!project) {
-    return next(new ApiError('Project not found', 404));
-  }
-
-  // Check if team has already requested
-  const existingRequest = project.teamRequests.find(
-    request => request.team.toString() === req.user.createdTeam._id.toString()
-  );
-
-  if (existingRequest) {
-    return next(
-      new ApiError('Your team has already requested to join this project', 400)
-    );
-  }
-
-  // Add new request
-  project.teamRequests.push({
-    team: req.user.createdTeam._id,
-    status: 'pending',
-    requestDate: Date.now(),
-  });
-
-  await project.save();
-
-  res.status(201).json({
-    message: 'Request sent successfully',
-    data: project.teamRequests[project.teamRequests.length - 1],
-  });
-});
-
-/**
- * @desc    Get all project requests
- * @route   GET /api/v1/projects/:id/requests
- * @access  Private/Client
- */
-const getProjectRequests = asyncHandler(async (req, res, next) => {
-  const project = await Project.findById(req.params.id)
-    .populate('teamRequests.team', 'name category members')
-    .select('teamRequests');
-
-  if (!project) {
-    return next(new ApiError('Project not found', 404));
-  }
-
-  // Use the helper function
-  isAuthorized(req.user._id, project.client, 'view requests for this project');
-
-  res.status(200).json({
-    message: 'success',
-    data: project.teamRequests,
-  });
-});
-
-/**
- * @desc    Accept project request
- * @route   PUT /api/v1/projects/:id/requests/:requestId/accept
- * @access  Private/Client
- */
-const acceptProjectRequest = asyncHandler(async (req, res, next) => {
-  const { id, requestId } = req.params;
-  const project = await Project.findById(id);
-
-  if (!project) {
-    return next(new ApiError('Project not found', 404));
-  }
-
-  // Use the helper function
-  isAuthorized(
-    req.user._id,
-    project.client,
-    'accept requests for this project'
-  );
-
-  const request = project.teamRequests.id(requestId);
-  if (!request) {
-    return next(new ApiError('Request not found', 404));
-  }
-
-  if (request.status !== 'pending') {
-    return next(new ApiError('Request is not pending', 400));
-  }
-
-  // Update request status
-  request.status = 'accepted';
-  request.responseDate = Date.now();
-
-  // Assign team to project
-  project.assignedTeam = request.team;
-  project.status = 'in-progress';
-
-  // Reject all other pending requests
-  project.teamRequests.forEach(requestItem => {
-    if (requestItem._id.toString() !== requestId && requestItem.status === 'pending') {
-      requestItem.status = 'rejected';
-      requestItem.responseDate = Date.now();
-    }
-  });
-
-  await project.save();
-
-  res.status(200).json({
-    message: 'Request accepted successfully',
-    data: request,
-  });
-});
-
-/**
- * @desc    Reject project request
- * @route   PUT /api/v1/projects/:id/requests/:requestId/reject
- * @access  Private/Client
- */
-const rejectProjectRequest = asyncHandler(async (req, res, next) => {
-  const { id, requestId } = req.params;
-  const project = await Project.findById(id);
-
-  if (!project) {
-    return next(new ApiError('Project not found', 404));
-  }
-
-  // Use the helper function
-  isAuthorized(
-    req.user._id,
-    project.client,
-    'reject requests for this project'
-  );
-
-  const request = project.teamRequests.id(requestId);
-  if (!request) {
-    return next(new ApiError('Request not found', 404));
-  }
-
-  if (request.status !== 'pending') {
-    return next(new ApiError('Request is not pending', 400));
-  }
-
-  // Update request status
-  request.status = 'rejected';
-  request.responseDate = Date.now();
-
-  await project.save();
-
-  res.status(200).json({
-    message: 'Request rejected successfully',
-    data: request,
-  });
-});
-
 export {
   createProject,
   getAllProject,
@@ -468,10 +316,6 @@ export {
   createFilterObject,
   // Security related exports
   updateProjectSecurity,
-  requestToJoinProject,
-  getProjectRequests,
-  acceptProjectRequest,
 };
-
 
 // team leader ---> add projects from application

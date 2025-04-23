@@ -9,12 +9,12 @@ Free-Gency is a platform that connects **clients with freelance teams**, providi
 ## 🌍 Deployment
 
 The project is deployed using **Koyeb** at the following link:
-🔗 https://free-gency-v1.koyeb.app
+🔗 https://free-gency-api-v1.onrender.com
 
 ### 🌐 Access the Live Application
 
 ```sh
-🔗 https://free-gency-v1.koyeb.app
+🔗 https://free-gency-api-v1.onrender.com
 ```
 
 ### 📩 Postman API Collection

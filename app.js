@@ -14,7 +14,8 @@ import authRouter from './routes/auth.routes.js';
 import categoryRouter from './routes/category.routes.js';
 import servicesRouter from './routes/services.routes.js';
 import teamRouter from './routes/team.routes.js';
-import projectRouter from './routes/project.routes.js';
+import clientTasksRouter from './routes/clientTasks.routes.js';
+import teamProjectsRouter from './routes/teamProjects.routes.js';
 
 dotenv.config({ path: './config/config.env' });
 
@@ -64,7 +65,8 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/services', servicesRouter);
 app.use('/api/v1/teams', teamRouter);
-app.use('/api/v1/projects', projectRouter);
+app.use('/api/v1/client-tasks', clientTasksRouter);
+app.use('/api/v1/team-projects', teamProjectsRouter);
 app.get('/ping', (req, res) => {
   res.status(200).send('pong');
 });

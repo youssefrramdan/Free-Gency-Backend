@@ -14,22 +14,22 @@ import {
 import { protectedRoutes } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
 
-const projectRouter = express.Router();
+const clientTasksRouter = express.Router();
 const upload = createUploader();
 
 /**
  * @swagger
  * tags:
- *   - name: Projects
- *     description: Project management operations
+ *   - name: Client Tasks
+ *     description: Client task management operations
  */
 
 /**
  * @swagger
- * /projects:
+ * /client-tasks:
  *   get:
- *     tags: [Projects]
- *     summary: Get all projects
+ *     tags: [Client Tasks]
+ *     summary: Get all client tasks
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -43,10 +43,10 @@ const upload = createUploader();
  *           type: string
  *     responses:
  *       200:
- *         description: List of all projects
+ *         description: List of all client tasks
  *   post:
- *     tags: [Projects]
- *     summary: Create a new project
+ *     tags: [Client Tasks]
+ *     summary: Create a new client task
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -81,19 +81,19 @@ const upload = createUploader();
  *                 format: binary
  *     responses:
  *       201:
- *         description: Project created successfully
+ *         description: Client task created successfully
  */
-projectRouter
+clientTasksRouter
   .route('/')
   .get(protectedRoutes, createFilterObject, getAllProject)
   .post(protectedRoutes, upload.array('requirment'), createProject);
 
 /**
  * @swagger
- * /projects/{id}:
+ * /client-tasks/{id}:
  *   get:
- *     tags: [Projects]
- *     summary: Get specific project
+ *     tags: [Client Tasks]
+ *     summary: Get specific client task
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -104,10 +104,10 @@ projectRouter
  *           type: string
  *     responses:
  *       200:
- *         description: Project details
+ *         description: Client task details
  *   put:
- *     tags: [Projects]
- *     summary: Update project details
+ *     tags: [Client Tasks]
+ *     summary: Update client task details
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -138,10 +138,10 @@ projectRouter
  *                 format: date
  *     responses:
  *       200:
- *         description: Project updated successfully
+ *         description: Client task updated successfully
  *   delete:
- *     tags: [Projects]
- *     summary: Delete project
+ *     tags: [Client Tasks]
+ *     summary: Delete client task
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -152,24 +152,24 @@ projectRouter
  *           type: string
  *     responses:
  *       200:
- *         description: Project deleted successfully
+ *         description: Client task deleted successfully
  */
-projectRouter
+clientTasksRouter
   .route('/:id')
   .get(protectedRoutes, getSpecificProject)
   .put(protectedRoutes, updateProjectDetails)
   .delete(protectedRoutes, deleteMyProject);
 
 // ==========================================
-// Project Files Routes
+// Task Files Routes
 // ==========================================
 
 /**
  * @swagger
- * /projects/{id}/projects-files:
+ * /client-tasks/{id}/projects-files:
  *   post:
- *     tags: [Projects]
- *     summary: Add project files
+ *     tags: [Client Tasks]
+ *     summary: Add client task files
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -194,16 +194,16 @@ projectRouter
  *       200:
  *         description: Files added successfully
  */
-projectRouter
+clientTasksRouter
   .route('/:id/projects-files')
   .post(protectedRoutes, upload.array('projectFiles'), addProjectFiles);
 
 /**
  * @swagger
- * /projects/{projectId}/projects-files/{fileId}:
+ * /client-tasks/{projectId}/projects-files/{fileId}:
  *   delete:
- *     tags: [Projects]
- *     summary: Delete project file
+ *     tags: [Client Tasks]
+ *     summary: Delete client task file
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -221,20 +221,20 @@ projectRouter
  *       200:
  *         description: File deleted successfully
  */
-projectRouter
+clientTasksRouter
   .route('/:projectId/projects-files/:fileId')
   .delete(protectedRoutes, deleteProjectFile);
 
 // ==========================================
-// Project Security Routes
+// Task Security Routes
 // ==========================================
 
 /**
  * @swagger
- * /projects/{id}/security:
+ * /client-tasks/{id}/security:
  *   put:
- *     tags: [Projects]
- *     summary: Update project security
+ *     tags: [Client Tasks]
+ *     summary: Update client task security
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -252,22 +252,13 @@ projectRouter
  *             properties:
  *               visibility:
  *                 type: string
- *                 enum: [private, public]
- *               requiredSkills:
- *                 type: array
- *                 items:
- *                   type: string
- *               budget:
- *                 type: string
- *               deadline:
- *                 type: string
- *                 format: date
+ *                 enum: [public, private]
  *     responses:
  *       200:
  *         description: Security settings updated successfully
  */
-projectRouter
+clientTasksRouter
   .route('/:id/security')
   .put(protectedRoutes, updateProjectSecurity);
 
-export default projectRouter;
+export default clientTasksRouter;

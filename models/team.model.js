@@ -43,7 +43,6 @@ const teamSchema = new mongoose.Schema(
       minlength: [100, 'About us must be at least 100 characters'],
       maxlength: [2000, 'About us cannot exceed 2000 characters'],
     },
-    // طلبات الانضمام
     joinRequests: [
       {
         user: {
@@ -63,11 +62,12 @@ const teamSchema = new mongoose.Schema(
       },
     ],
 
-    projects: [
+    // Client tasks the team is working on
+    clientTasks: [
       {
         project: {
           type: mongoose.Schema.ObjectId,
-          ref: 'Project',
+          ref: 'ClientTasks',
         },
         status: {
           type: String,
@@ -77,20 +77,15 @@ const teamSchema = new mongoose.Schema(
         completionDate: Date,
       },
     ],
-    lastedProjects: [
+
+    // Team projects (showcase of team's work)
+    teamProjects: [
       {
-        title: {
-          type: String,
-          required: true,
-        },
-        budget: String,
-        description: String,
-        images: [String],
-        projectUrl: String,
-        technologies: [String],
-        completionDate: Date,
+        type: mongoose.Schema.ObjectId,
+        ref: 'TeamProjects',
       },
     ],
+
     rating: {
       average: {
         type: Number,

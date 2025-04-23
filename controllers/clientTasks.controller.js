@@ -1,6 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import ApiError from '../utils/apiError.js';
-import ClientTasks from '../models/project.model.js';
+import ClientTasks from '../models/clientTasks.model.js';
 import User from '../models/user.model.js';
 import Team from '../models/team.model.js';
 
@@ -35,7 +35,7 @@ export const isAuthorized = (
  * @route   GET /api/v1/categories/:categoryId/client-tasks
  * @access  Private
  */
-const createFilterObject = (req, res, next) => {
+export const createFilterObject = (req, res, next) => {
   let filterObject = {};
   if (req.params.categoryId) {
     filterObject = { category: req.params.categoryId };
@@ -53,17 +53,17 @@ const createFilterObject = (req, res, next) => {
  * @route   POST /api/v1/client-tasks
  * @access  Private
  */
-export const createProject = asyncHandler(async (req, res) => {
+export const createClientTask = asyncHandler(async (req, res) => {
   // Add the client ID to the project
   req.body.client = req.user._id;
 
   // Create the project
-  const project = await ClientTasks.create(req.body);
+  const task = await ClientTasks.create(req.body);
 
   res.status(201).json({
     status: 'success',
     data: {
-      project,
+      task,
     },
   });
 });
@@ -73,21 +73,21 @@ export const createProject = asyncHandler(async (req, res) => {
  * @route   GET /api/v1/client-tasks
  * @access  Private
  */
-export const getAllProject = asyncHandler(async (req, res) => {
+export const getAllClientTasks = asyncHandler(async (req, res) => {
   // Get filter object from middleware
   const filterObject = req.filterObject || {};
 
-  // Get all projects
-  const projects = await ClientTasks.find(filterObject)
+  // Get all tasks
+  const tasks = await ClientTasks.find(filterObject)
     .populate('client', 'name email')
     .populate('category', 'name')
     .populate('service', 'name');
 
   res.status(200).json({
     status: 'success',
-    results: projects.length,
+    results: tasks.length,
     data: {
-      projects,
+      tasks,
     },
   });
 });
@@ -97,21 +97,21 @@ export const getAllProject = asyncHandler(async (req, res) => {
  * @route   GET /api/v1/client-tasks/:id
  * @access  Private
  */
-export const getSpecificProject = asyncHandler(async (req, res) => {
-  const project = await ClientTasks.findById(req.params.id)
+export const getClientTask = asyncHandler(async (req, res) => {
+  const task = await ClientTasks.findById(req.params.id)
     .populate('client', 'name email')
     .populate('category', 'name')
     .populate('service', 'name')
     .populate('assignedTeam', 'name logo');
 
-  if (!project) {
+  if (!task) {
     throw new ApiError('Task not found', 404);
   }
 
   res.status(200).json({
     status: 'success',
     data: {
-      project,
+      task,
     },
   });
 });
@@ -121,18 +121,18 @@ export const getSpecificProject = asyncHandler(async (req, res) => {
  * @route   PUT /api/v1/client-tasks/:id
  * @access  Private
  */
-export const updateProjectDetails = asyncHandler(async (req, res) => {
-  const project = await ClientTasks.findById(req.params.id);
+export const updateClientTask = asyncHandler(async (req, res) => {
+  const task = await ClientTasks.findById(req.params.id);
 
-  if (!project) {
+  if (!task) {
     throw new ApiError('Task not found', 404);
   }
 
-  // Check if user is the client who created the project
-  isAuthorized(req.user._id, project.client, 'update this task');
+  // Check if user is the client who created the task
+  isAuthorized(req.user._id, task.client, 'update this task');
 
-  // Update project
-  const updatedProject = await ClientTasks.findByIdAndUpdate(
+  // Update task
+  const updatedTask = await ClientTasks.findByIdAndUpdate(
     req.params.id,
     req.body,
     {
@@ -144,7 +144,7 @@ export const updateProjectDetails = asyncHandler(async (req, res) => {
   res.status(200).json({
     status: 'success',
     data: {
-      project: updatedProject,
+      task: updatedTask,
     },
   });
 });
@@ -154,17 +154,17 @@ export const updateProjectDetails = asyncHandler(async (req, res) => {
  * @route   DELETE /api/v1/client-tasks/:id
  * @access  Private
  */
-export const deleteMyProject = asyncHandler(async (req, res) => {
-  const project = await ClientTasks.findById(req.params.id);
+export const deleteClientTask = asyncHandler(async (req, res) => {
+  const task = await ClientTasks.findById(req.params.id);
 
-  if (!project) {
+  if (!task) {
     throw new ApiError('Task not found', 404);
   }
 
-  // Check if user is the client who created the project
-  isAuthorized(req.user._id, project.client, 'delete this task');
+  // Check if user is the client who created the task
+  isAuthorized(req.user._id, task.client, 'delete this task');
 
-  // Delete project
+  // Delete task
   await ClientTasks.findByIdAndDelete(req.params.id);
 
   res.status(204).json({
@@ -174,25 +174,25 @@ export const deleteMyProject = asyncHandler(async (req, res) => {
 });
 
 // ==========================================
-// Project Files Operations
+// Task Files Operations
 // ==========================================
 
 /**
  * @desc    Add files to client task
- * @route   POST /api/v1/client-tasks/:id/projects-files
+ * @route   POST /api/v1/client-tasks/:id/task-files
  * @access  Private
  */
-export const addProjectFiles = asyncHandler(async (req, res) => {
-  const project = await ClientTasks.findById(req.params.id);
+export const addTaskFiles = asyncHandler(async (req, res) => {
+  const task = await ClientTasks.findById(req.params.id);
 
-  if (!project) {
+  if (!task) {
     throw new ApiError('Task not found', 404);
   }
 
-  // Check if user is the client who created the project
-  isAuthorized(req.user._id, project.client, 'add files to this task');
+  // Check if user is the client who created the task
+  isAuthorized(req.user._id, task.client, 'add files to this task');
 
-  // Add files to project
+  // Add files to task
   if (req.files && req.files.length > 0) {
     const files = req.files.map(file => ({
       fileName: file.originalname,
@@ -200,35 +200,35 @@ export const addProjectFiles = asyncHandler(async (req, res) => {
       uploadedAt: Date.now(),
     }));
 
-    project.projectFiles.push(...files);
-    await project.save();
+    task.projectFiles.push(...files);
+    await task.save();
   }
 
   res.status(200).json({
     status: 'success',
     data: {
-      project,
+      task,
     },
   });
 });
 
 /**
  * @desc    Delete file from client task
- * @route   DELETE /api/v1/client-tasks/:projectId/projects-files/:fileId
+ * @route   DELETE /api/v1/client-tasks/:taskId/task-files/:fileId
  * @access  Private
  */
-export const deleteProjectFile = asyncHandler(async (req, res) => {
-  const project = await ClientTasks.findById(req.params.projectId);
+export const deleteTaskFile = asyncHandler(async (req, res) => {
+  const task = await ClientTasks.findById(req.params.taskId);
 
-  if (!project) {
+  if (!task) {
     throw new ApiError('Task not found', 404);
   }
 
-  // Check if user is the client who created the project
-  isAuthorized(req.user._id, project.client, 'delete files from this task');
+  // Check if user is the client who created the task
+  isAuthorized(req.user._id, task.client, 'delete files from this task');
 
   // Find and remove the file
-  const fileIndex = project.projectFiles.findIndex(
+  const fileIndex = task.projectFiles.findIndex(
     file => file._id.toString() === req.params.fileId
   );
 
@@ -236,19 +236,19 @@ export const deleteProjectFile = asyncHandler(async (req, res) => {
     throw new ApiError('File not found', 404);
   }
 
-  project.projectFiles.splice(fileIndex, 1);
-  await project.save();
+  task.projectFiles.splice(fileIndex, 1);
+  await task.save();
 
   res.status(200).json({
     status: 'success',
     data: {
-      project,
+      task,
     },
   });
 });
 
 // ==========================================
-// Project Security Operations
+// Task Security Operations
 // ==========================================
 
 /**
@@ -256,28 +256,28 @@ export const deleteProjectFile = asyncHandler(async (req, res) => {
  * @route   PUT /api/v1/client-tasks/:id/security
  * @access  Private
  */
-export const updateProjectSecurity = asyncHandler(async (req, res) => {
-  const project = await ClientTasks.findById(req.params.id);
+export const updateTaskSecurity = asyncHandler(async (req, res) => {
+  const task = await ClientTasks.findById(req.params.id);
 
-  if (!project) {
+  if (!task) {
     throw new ApiError('Task not found', 404);
   }
 
-  // Check if user is the client who created the project
+  // Check if user is the client who created the task
   isAuthorized(
     req.user._id,
-    project.client,
+    task.client,
     'update security settings for this task'
   );
 
   // Update security settings
-  project.visibility = req.body.visibility;
-  await project.save();
+  task.visibility = req.body.visibility;
+  await task.save();
 
   res.status(200).json({
     status: 'success',
     data: {
-      project,
+      task,
     },
   });
 });

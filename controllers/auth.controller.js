@@ -103,6 +103,10 @@ const login = asyncHandler(async (req, res, next) => {
     '+password'
   );
 
+  if (!user) {
+    return next(new ApiError('user isnt exist', 401));
+  }
+
   if (!user.isVerified) {
     return next(
       new ApiError(
@@ -110,10 +114,6 @@ const login = asyncHandler(async (req, res, next) => {
         403
       )
     );
-  }
-
-  if (!user) {
-    return next(new ApiError('Incorrect email or password', 401));
   }
 
   const isPasswordCorrect = await user.comparePassword(req.body.password);

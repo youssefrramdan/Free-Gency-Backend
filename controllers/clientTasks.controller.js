@@ -1,8 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import ApiError from '../utils/apiError.js';
 import ClientTasks from '../models/clientTasks.model.js';
-import User from '../models/user.model.js';
-import Team from '../models/team.model.js';
 
 // ==========================================
 // Authorization Helper
@@ -247,37 +245,3 @@ export const deleteTaskFile = asyncHandler(async (req, res) => {
   });
 });
 
-// ==========================================
-// Task Security Operations
-// ==========================================
-
-/**
- * @desc    Update client task security settings
- * @route   PUT /api/v1/client-tasks/:id/security
- * @access  Private
- */
-export const updateTaskSecurity = asyncHandler(async (req, res) => {
-  const task = await ClientTasks.findById(req.params.id);
-
-  if (!task) {
-    throw new ApiError('Task not found', 404);
-  }
-
-  // Check if user is the client who created the task
-  isAuthorized(
-    req.user._id,
-    task.client,
-    'update security settings for this task'
-  );
-
-  // Update security settings
-  task.visibility = req.body.visibility;
-  await task.save();
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      task,
-    },
-  });
-});

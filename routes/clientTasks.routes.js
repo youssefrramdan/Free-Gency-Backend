@@ -8,8 +8,6 @@ import {
   updateClientTask,
   deleteClientTask,
   createFilterObject,
-  // Security related controllers
-  updateTaskSecurity,
 } from '../controllers/clientTasks.controller.js';
 import { protectedRoutes  , allowTo} from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
@@ -37,7 +35,5 @@ router.route('/:id/task-files').post(upload.array('taskFiles'), addTaskFiles);
 
 router.route('/:taskId/task-files/:fileId').delete(deleteTaskFile);
 
-// Task Security Routes
-router.route('/:id/security').put(updateTaskSecurity);
 
 export default router;

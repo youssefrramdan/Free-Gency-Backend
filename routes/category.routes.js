@@ -66,7 +66,7 @@ categoryRouter.use('/:categoryId/services', servicesRouter);
 categoryRouter
   .route('/')
   .get(getAllCategories)
-  .post(upload.single('image'), createCategoryValidator, createCategory);
+  .post(createCategoryValidator, createCategory);
 
 /**
  * @swagger
@@ -123,7 +123,7 @@ categoryRouter
 categoryRouter
   .route('/:id')
   .get(getSpecificCategoryValidator, getSpecificCategory)
-  .put(upload.single('image'), updateCategoryValidator, updateCategory)
+  .put(updateCategoryValidator, updateCategory)
   .delete(deleteCategoryValidator, deletegetCategory);
 
 export default categoryRouter;

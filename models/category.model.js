@@ -7,9 +7,6 @@ const categorySchema = new mongoose.Schema(
       required: [true, 'Category name is required'],
       trim: true,
     },
-    image: {
-      type: String,
-    },
     status: {
       type: String,
       enum: ['active', 'inactive'],
@@ -21,7 +18,7 @@ const categorySchema = new mongoose.Schema(
     toJSON: {
       virtuals: true,
       transform: function (doc, ret) {
-        delete ret.id; 
+        delete ret.id;
         return ret;
       },
     },

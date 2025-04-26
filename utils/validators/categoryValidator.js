@@ -18,14 +18,6 @@ const createCategoryValidator = [
         }
       })
     ),
-
-  check('image').custom((val, { req }) => {
-    if (!req.file) {
-      throw new Error('Category image is required');
-    }
-    return true;
-  }),
-
   check('status')
     .optional()
     .isIn(['active', 'inactive'])
@@ -46,15 +38,6 @@ const updateCategoryValidator = [
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('Category name must be between 2 and 50 characters'),
-
-  check('image')
-    .optional()
-    .custom((val, { req }) => {
-      if (!req.file) {
-        throw new Error('Please upload a valid image file');
-      }
-      return true;
-    }),
 
   check('status')
     .optional()

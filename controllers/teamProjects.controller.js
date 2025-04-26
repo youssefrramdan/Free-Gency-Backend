@@ -26,11 +26,9 @@ export const isAuthorized = (
 };
 
 // Create a new team project
-export const createTeamProject = asyncHandler(async (req, res, next) => {
-  const { teamId } = req.params;
-
+const createProject = asyncHandler(async (req, res, next) => {
   // Check if team exists
-  const team = await Team.findById(teamId);
+  const team = await Team.findById(req.user.createdTeam);
   if (!team) {
     return next(new ApiError('Team not found', 404));
   }
@@ -41,7 +39,7 @@ export const createTeamProject = asyncHandler(async (req, res, next) => {
   // Create team project
   const teamProject = await TeamProjects.create({
     ...req.body,
-    team: teamId,
+    team: req.user.createdTeam,
   });
 
   // Add team project to team
@@ -57,8 +55,8 @@ export const createTeamProject = asyncHandler(async (req, res, next) => {
 });
 
 // Get all team projects
-export const getAllTeamProjects = asyncHandler(async (req, res, next) => {
-  const projects = await TeamProjects.find()
+const getAllMyProjects = asyncHandler(async (req, res, next) => {
+  const projects = await TeamProjects.find({ team: req.user._id })
     .populate('team', 'name logo')
     .populate('category', 'name');
 
@@ -69,47 +67,75 @@ export const getAllTeamProjects = asyncHandler(async (req, res, next) => {
   });
 });
 
-// Get team projects by team
-export const getTeamProjects = asyncHandler(async (req, res, next) => {
-  const { teamId } = req.params;
+// Middleware to create filter object for team-based or category-based filtering
+const createFilterObject = (req, res, next) => {
+  const filterObject = {};
 
-  // Check if team exists
-  const team = await Team.findById(teamId);
-  if (!team) {
-    return next(new ApiError('Team not found', 404));
+  // If teamId is present, filter by team
+  if (req.params.teamId) {
+    filterObject.team = req.params.teamId;
   }
 
-  const projects = await TeamProjects.find({
-    team: teamId,
-  }).populate('category', 'name');
+  // If categoryId is present, filter by category
+  if (req.params.categoryId) {
+    filterObject.category = req.params.categoryId;
+  }
+
+  req.filterObject = filterObject;
+  next();
+};
+
+/**
+ * @desc    Get all projects for a specific team
+ * @route   GET /api/v1/teams/:teamId/projects
+ * @access  Public
+ */
+const getAllTeamProjects = asyncHandler(async (req, res, next) => {
+  const projects = await TeamProjects.find(req.filterObject)
+    .populate({
+      path: 'team',
+      select: 'name category',
+    })
+    .select('-__v -createdAt -updatedAt');
 
   res.status(200).json({
-    status: 'success',
-    results: projects.length,
+    message: 'success',
     data: projects,
   });
 });
 
-// Get a single team project
-export const getTeamProject = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-
-  const project = await TeamProjects.findById(id)
-    .populate('team', 'name logo')
-    .populate('category', 'name');
+/**
+ * @desc    Get specific project for a team
+ * @route   GET /api/v1/teams/:teamId/projects/:projectId
+ * @access  Public
+ */
+const getSpecificProject = asyncHandler(async (req, res, next) => {
+  const { projectId } = req.params;
+  const project = await TeamProjects.findOne({
+    _id: projectId,
+    team: req.params.teamId,
+  }).populate({
+    path: 'team',
+    select: 'name category',
+  });
 
   if (!project) {
-    return next(new ApiError('Team project not found', 404));
+    return next(
+      new ApiError(
+        `No project found with ID ${projectId} for team ${req.params.teamId}`,
+        404
+      )
+    );
   }
 
   res.status(200).json({
-    status: 'success',
+    message: 'success',
     data: project,
   });
 });
 
-// Update a team project
-export const updateTeamProject = asyncHandler(async (req, res, next) => {
+// Update a project
+const updateProject = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
   const teamProject = await TeamProjects.findById(id);
@@ -137,7 +163,7 @@ export const updateTeamProject = asyncHandler(async (req, res, next) => {
 });
 
 // Delete a team project
-export const deleteTeamProject = asyncHandler(async (req, res, next) => {
+const deleteSpecificProject = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
   const teamProject = await TeamProjects.findById(id);
@@ -168,3 +194,13 @@ export const deleteTeamProject = asyncHandler(async (req, res, next) => {
     data: null,
   });
 });
+
+export {
+  createProject,
+  getAllTeamProjects,
+  updateProject,
+  deleteSpecificProject,
+  getSpecificProject,
+  getAllMyProjects,
+  createFilterObject,
+};

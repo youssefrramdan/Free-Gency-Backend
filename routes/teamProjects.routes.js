@@ -1,31 +1,30 @@
 import express from 'express';
 import {
-  createTeamProject,
+  createProject,
   getAllTeamProjects,
-  getTeamProjects,
-  getTeamProject,
-  updateTeamProject,
+  updateProject,
   deleteTeamProject,
+  getSpecificProject,
+  createFilterObject,
 } from '../controllers/teamProjects.controller.js';
 import { protectedRoutes, allowTo } from '../controllers/auth.controller.js';
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 // protect all routes after this middleware
 router.use(protectedRoutes);
 
 // Routes for team projects
-router.route('/').get(getAllTeamProjects);
-
-// Create a team project for a specific team
-router.post('/team/:teamId', allowTo('teamLeader'), createTeamProject);
-
-// Get all team projects for a specific team
-router.get('/team/:teamId', getTeamProjects);
-
+// Get all projects for a specific team and create new project
 router
-  .route('/:id')
-  .get(getTeamProject)
+  .route('/')
+  .get(createFilterObject, getAllTeamProjects)
+  .post(allowTo('teamLeader'), createTeamProject);
+
+// Get, update, or delete a specific project
+router
+  .route('/:projectId')
+  .get(getSpecificProject)
   .patch(allowTo('teamLeader'), updateTeamProject)
   .delete(allowTo('teamLeader'), deleteTeamProject);
 

@@ -8,7 +8,6 @@ import ApiError from '../utils/apiError.js';
  * @access  Private/Admin
  */
 const createCategory = asyncHandler(async (req, res, next) => {
-  req.body.image = req.file.path;
   const category = await Category.create(req.body);
 
   res.status(201).json({

@@ -17,7 +17,6 @@ import servicesRouter from './services.routes.js';
 // import projectRouter from './project.routes.js';
 
 const categoryRouter = express.Router();
-const upload = createUploader('categoryImages');
 
 // Nested route - Services as Subcategories
 categoryRouter.use('/:categoryId/services', servicesRouter);

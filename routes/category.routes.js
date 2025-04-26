@@ -14,7 +14,7 @@ import {
   updateCategory,
 } from '../controllers/categoty.controller.js';
 import servicesRouter from './services.routes.js';
-import projectRouter from './project.routes.js';
+// import projectRouter from './project.routes.js';
 
 const categoryRouter = express.Router();
 const upload = createUploader('categoryImages');
@@ -23,7 +23,7 @@ const upload = createUploader('categoryImages');
 categoryRouter.use('/:categoryId/services', servicesRouter);
 
 // Nested route - Projects as Subcategories
-categoryRouter.use('/:categoryId/projects', projectRouter);
+// categoryRouter.use('/:categoryId/projects', projectRouter);
 
 /**
  * @swagger

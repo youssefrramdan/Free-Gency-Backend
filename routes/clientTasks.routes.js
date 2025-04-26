@@ -11,14 +11,14 @@ import {
   // Security related controllers
   updateTaskSecurity,
 } from '../controllers/clientTasks.controller.js';
-import { protect, restrictTo } from '../middlewares/auth.middleware.js';
+import { protectedRoutes  , allowTo} from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
 
 const router = express.Router();
 const upload = createUploader();
 
 // Protect all routes after this middleware
-router.use(protect);
+router.use(protectedRoutes);
 
 // Routes for client tasks
 router

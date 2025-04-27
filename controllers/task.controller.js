@@ -36,15 +36,19 @@ export const isAuthorized = (
 const createTask = asyncHandler(async (req, res) => {
   // Add the client ID to the project
   req.body.client = req.user._id;
-  // Check if there are uploaded files
+
+  const requirment = [];
   if (req.files && req.files.length > 0) {
-    // Store file references in the task
-    req.body.requirement = req.files.map(file => ({
-      fileName: file.originalname,
-      fileUrl: file.path,
-    }));
+    req.files.forEach(file => {
+      requirment.push({
+        fileName: file.originalname,
+        fileUrl: file.path,
+      });
+    });
+    req.body.requirment = requirment;
   }
-  // Create the project
+
+  // Create the task
   const task = await Task.create(req.body);
 
   res.status(201).json({

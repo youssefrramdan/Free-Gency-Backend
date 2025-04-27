@@ -20,7 +20,7 @@ import {
 } from '../utils/validators/taskValidator.js';
 
 const taskRouter = express.Router();
-const upload = createUploader();
+const upload = createUploader("tasksRequirment");
 
 // Protect all routes after this middleware
 taskRouter.use(protectedRoutes);

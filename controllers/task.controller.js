@@ -1,6 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import ApiError from '../utils/apiError.js';
-import ClientTasks from '../models/clientTasks.model.js';
+import Task from '../models/task.model.js';
 
 // ==========================================
 // Authorization Helper
@@ -25,38 +25,20 @@ export const isAuthorized = (
 };
 
 // ==========================================
-// Middleware
+// Task CRUD Operations
 // ==========================================
 
 /**
- * @desc    Create filter object for category-based filtering
- * @route   GET /api/v1/categories/:categoryId/client-tasks
+ * @desc    Create a new task
+ * @route   POST /api/v1/tasks
  * @access  Private
  */
-export const createFilterObject = (req, res, next) => {
-  let filterObject = {};
-  if (req.params.categoryId) {
-    filterObject = { category: req.params.categoryId };
-  }
-  req.filterObject = filterObject;
-  next();
-};
-
-// ==========================================
-// Client Tasks CRUD Operations
-// ==========================================
-
-/**
- * @desc    Create a new client task
- * @route   POST /api/v1/client-tasks
- * @access  Private
- */
-export const createClientTask = asyncHandler(async (req, res) => {
+const createTask = asyncHandler(async (req, res) => {
   // Add the client ID to the project
   req.body.client = req.user._id;
 
   // Create the project
-  const task = await ClientTasks.create(req.body);
+  const task = await Task.create(req.body);
 
   res.status(201).json({
     status: 'success',
@@ -67,16 +49,38 @@ export const createClientTask = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Get all client tasks
- * @route   GET /api/v1/client-tasks
+ * @desc    Get all Task
+ * @route   GET /api/v1/tasks
+ * @access  Private (Admin)
+ */
+const getAllTasks = asyncHandler(async (req, res) => {
+  // Get all tasks
+  const tasks = await Task.find()
+    .populate('client', 'name email')
+    .populate('category', 'name')
+    .populate('service', 'name');
+
+  res.status(200).json({
+    status: 'success',
+    results: tasks.length,
+    data: {
+      tasks,
+    },
+  });
+});
+
+/**
+ * @desc    Get tasks based on user interests
+ * @route   GET /api/v1/tasks/by-interest
  * @access  Private
  */
-export const getAllClientTasks = asyncHandler(async (req, res) => {
-  // Get filter object from middleware
-  const filterObject = req.filterObject || {};
+const getTasksByInterest = asyncHandler(async (req, res) => {
+  const { interests } = req.user;
 
-  // Get all tasks
-  const tasks = await ClientTasks.find(filterObject)
+  // Get tasks that match user's interests
+  const tasks = await Task.find({
+    category: { $in: interests },
+  })
     .populate('client', 'name email')
     .populate('category', 'name')
     .populate('service', 'name');
@@ -92,18 +96,18 @@ export const getAllClientTasks = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get a specific client task
- * @route   GET /api/v1/client-tasks/:id
+ * @route   GET /api/v1/tasks/:id
  * @access  Private
  */
-export const getClientTask = asyncHandler(async (req, res) => {
-  const task = await ClientTasks.findById(req.params.id)
+const getSpecificTask = asyncHandler(async (req, res, next) => {
+  const task = await Task.findById(req.params.id)
     .populate('client', 'name email')
     .populate('category', 'name')
     .populate('service', 'name')
     .populate('assignedTeam', 'name logo');
 
   if (!task) {
-    throw new ApiError('Task not found', 404);
+    next(new ApiError('Task not found', 404));
   }
 
   res.status(200).json({
@@ -116,28 +120,24 @@ export const getClientTask = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Update client task details
- * @route   PUT /api/v1/client-tasks/:id
+ * @route   PUT /api/v1/tasks/:id
  * @access  Private
  */
-export const updateClientTask = asyncHandler(async (req, res) => {
-  const task = await ClientTasks.findById(req.params.id);
+const updateSpecificTask = asyncHandler(async (req, res, next) => {
+  const task = await Task.findById(req.params.id);
 
   if (!task) {
-    throw new ApiError('Task not found', 404);
+    next(new ApiError('Task not found', 404));
   }
 
   // Check if user is the client who created the task
   isAuthorized(req.user._id, task.client, 'update this task');
 
   // Update task
-  const updatedTask = await ClientTasks.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+  const updatedTask = await Task.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
 
   res.status(200).json({
     status: 'success',
@@ -149,25 +149,24 @@ export const updateClientTask = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Delete client task
- * @route   DELETE /api/v1/client-tasks/:id
+ * @route   DELETE /api/v1/tasks/:id
  * @access  Private
  */
-export const deleteClientTask = asyncHandler(async (req, res) => {
-  const task = await ClientTasks.findById(req.params.id);
+const deleteSpecificTask = asyncHandler(async (req, res, next) => {
+  const task = await Task.findById(req.params.id);
 
   if (!task) {
-    throw new ApiError('Task not found', 404);
+    next(new ApiError('Task not found', 404));
   }
 
   // Check if user is the client who created the task
   isAuthorized(req.user._id, task.client, 'delete this task');
 
   // Delete task
-  await ClientTasks.findByIdAndDelete(req.params.id);
+  await Task.findByIdAndDelete(req.params.id);
 
   res.status(204).json({
     status: 'success',
-    data: null,
   });
 });
 
@@ -176,15 +175,15 @@ export const deleteClientTask = asyncHandler(async (req, res) => {
 // ==========================================
 
 /**
- * @desc    Add files to client task
- * @route   POST /api/v1/client-tasks/:id/task-files
+ * @desc    Add files to task
+ * @route   POST /api/v1/tasks/:id/task-files
  * @access  Private
  */
-export const addTaskFiles = asyncHandler(async (req, res) => {
-  const task = await ClientTasks.findById(req.params.id);
+const addTaskFiles = asyncHandler(async (req, res, next) => {
+  const task = await Task.findById(req.params.taskId);
 
   if (!task) {
-    throw new ApiError('Task not found', 404);
+    next(new ApiError('Task not found', 404));
   }
 
   // Check if user is the client who created the task
@@ -198,7 +197,7 @@ export const addTaskFiles = asyncHandler(async (req, res) => {
       uploadedAt: Date.now(),
     }));
 
-    task.projectFiles.push(...files);
+    task.taskFiles.push(...files);
     await task.save();
   }
 
@@ -212,11 +211,11 @@ export const addTaskFiles = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Delete file from client task
- * @route   DELETE /api/v1/client-tasks/:taskId/task-files/:fileId
+ * @route   DELETE /api/v1/tasks/:taskId/task-files/:fileId
  * @access  Private
  */
-export const deleteTaskFile = asyncHandler(async (req, res) => {
-  const task = await ClientTasks.findById(req.params.taskId);
+const deleteTaskFile = asyncHandler(async (req, res) => {
+  const task = await Task.findById(req.params.taskId);
 
   if (!task) {
     throw new ApiError('Task not found', 404);
@@ -234,7 +233,7 @@ export const deleteTaskFile = asyncHandler(async (req, res) => {
     throw new ApiError('File not found', 404);
   }
 
-  task.projectFiles.splice(fileIndex, 1);
+  task.taskFiles.splice(fileIndex, 1);
   await task.save();
 
   res.status(200).json({
@@ -245,3 +244,13 @@ export const deleteTaskFile = asyncHandler(async (req, res) => {
   });
 });
 
+export {
+  createTask,
+  getAllTasks,
+  getTasksByInterest,
+  getSpecificTask,
+  updateSpecificTask,
+  deleteSpecificTask,
+  addTaskFiles,
+  deleteTaskFile,
+};

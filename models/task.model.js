@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 // ClientTasks ----> created by clients for teams to work on
-const clientTasksSchema = new mongoose.Schema(
+const taskSchema = new mongoose.Schema(
   {
-    projectTitle: {
+    title: {
       type: String,
       required: true,
       trim: true,
@@ -47,7 +47,7 @@ const clientTasksSchema = new mongoose.Schema(
         fileUrl: String,
       },
     ],
-    projectFiles: [
+    taskFiles: [
       {
         fileName: String,
         fileUrl: String,
@@ -58,7 +58,7 @@ const clientTasksSchema = new mongoose.Schema(
       },
     ],
     // Project history now reflects the overall project status changes
-    projectHistory: [
+    taskHistory: [
       {
         status: {
           type: String,
@@ -79,12 +79,12 @@ const clientTasksSchema = new mongoose.Schema(
 );
 
 // Indexes for performance
-clientTasksSchema.index({ client: 1, status: 1 });
-clientTasksSchema.index({ category: 1 });
-clientTasksSchema.index({ assignedTeam: 1 });
+taskSchema.index({ client: 1, status: 1 });
+taskSchema.index({ category: 1 });
+taskSchema.index({ assignedTeam: 1 });
 
 // Pre-save middleware to handle request status changes
-clientTasksSchema.pre('save', function (next) {
+taskSchema.pre('save', function (next) {
   // Add project status change to projectHistory when status changes
   if (this.isModified('status')) {
     this.projectHistory.push({
@@ -97,5 +97,5 @@ clientTasksSchema.pre('save', function (next) {
   next();
 });
 
-const ClientTasks = mongoose.model('ClientTasks', clientTasksSchema);
-export default ClientTasks;
+const Task = mongoose.model('Task', taskSchema);
+export default Task;

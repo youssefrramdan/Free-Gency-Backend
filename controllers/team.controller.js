@@ -293,7 +293,7 @@ const removeTeamMember = asyncHandler(async (req, res, next) => {
 });
 
 // ==========================================
-// Team Projects Management
+// Projects Management
 // ==========================================
 
 /**

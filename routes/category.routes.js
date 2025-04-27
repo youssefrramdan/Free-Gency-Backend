@@ -14,7 +14,7 @@ import {
   updateCategory,
 } from '../controllers/categoty.controller.js';
 import servicesRouter from './services.routes.js';
-import teamProjectsRouter from './teamProjects.routes.js';
+import projectsRouter from './projects.routes.js';
 
 const categoryRouter = express.Router();
 
@@ -22,7 +22,7 @@ const categoryRouter = express.Router();
 categoryRouter.use('/:categoryId/services', servicesRouter);
 
 // Nested route - Projects as Subcategories
-categoryRouter.use('/:categoryId/projects', teamProjectsRouter);
+categoryRouter.use('/:categoryId/projects', projectsRouter);
 
 categoryRouter
   .route('/')

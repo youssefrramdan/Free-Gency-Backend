@@ -18,6 +18,11 @@ const clientTasksSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Category',
     },
+    services: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Service',
+    },
+
     requiredSkills: [String],
     deadline: {
       type: Date,
@@ -77,7 +82,6 @@ const clientTasksSchema = new mongoose.Schema(
 clientTasksSchema.index({ client: 1, status: 1 });
 clientTasksSchema.index({ category: 1 });
 clientTasksSchema.index({ assignedTeam: 1 });
-clientTasksSchema.index({ 'teamRequests.team': 1, 'teamRequests.status': 1 });
 
 // Pre-save middleware to handle request status changes
 clientTasksSchema.pre('save', function (next) {

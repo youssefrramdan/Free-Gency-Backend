@@ -35,7 +35,7 @@ import {
   getJoinRequests,
 } from '../controllers/joinRequests.controller.js';
 import validateJoinRequest from '../middlewares/validateJoinRequest.js';
-import teamProjectsRouter from './teamProjects.routes.js';
+import ProjectsRouter from './projects.routes.js';
 
 const teamRouter = express.Router();
 
@@ -50,7 +50,7 @@ teamRouter
   .route('/requests/:id')
   .get(protectedRoutes, validateJoinRequest, getSpecificJoinRequest)
   .delete(protectedRoutes, validateJoinRequest, deleteJoinRequest);
-=teamRouter
+teamRouter
   .route('/requests/:id/accept')
   .patch(protectedRoutes, validateJoinRequest, acceptJoinRequest);
 
@@ -92,7 +92,7 @@ teamRouter
   .get(getSpecificTeamValidator, getSpecificTeam)
   .delete(protectedRoutes, deleteSpecificTeamValidator, deleteTeam);
 
-// Nested routes for team projects
-teamRouter.use('/:teamId/projects', teamProjectsRouter);
+// Nested routes for projects
+teamRouter.use('/:teamId/projects', ProjectsRouter);
 
 export default teamRouter;

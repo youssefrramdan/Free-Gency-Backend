@@ -78,11 +78,11 @@ const teamSchema = new mongoose.Schema(
       },
     ],
 
-    // Team projects (showcase of team's work)
-    teamProjects: [
+    // projects (showcase of team's work)
+    Projects: [
       {
         type: mongoose.Schema.ObjectId,
-        ref: 'TeamProjects',
+        ref: 'Projects',
       },
     ],
 

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const teamProjectsSchema = new mongoose.Schema(
+const ProjectsSchema = new mongoose.Schema(
   {
     title: {
       type: String,
@@ -31,6 +31,10 @@ const teamProjectsSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Category',
     },
+    service: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Service',
+    },
     visibility: {
       type: String,
       enum: ['public', 'private'],
@@ -43,9 +47,9 @@ const teamProjectsSchema = new mongoose.Schema(
 );
 
 // Indexes for performance
-teamProjectsSchema.index({ team: 1 });
-teamProjectsSchema.index({ category: 1 });
-teamProjectsSchema.index({ visibility: 1 });
+ProjectsSchema.index({ team: 1 });
+ProjectsSchema.index({ category: 1 });
+ProjectsSchema.index({ visibility: 1 });
 
-const TeamProjects = mongoose.model('TeamProjects', teamProjectsSchema);
-export default TeamProjects;
+const Projects = mongoose.model('Projects', ProjectsSchema);
+export default Projects;

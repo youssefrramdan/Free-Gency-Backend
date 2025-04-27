@@ -15,13 +15,15 @@ import {
   getSpecificServiceValidator,
   updateServiceValidator,
 } from '../utils/validators/serviceValidator.js';
+import projectsRouter from './projects.routes.js';
 
 // mergeParams: Allow us to access params on other routers
 // ex: We need to access param --> (categoryId) from category router
 
 const servicesRouter = express.Router({ mergeParams: true });
 const upload = createUploader('servicesImages');
-
+// Nested route - Projects as Subcategories
+servicesRouter.use('/:serviceId/projects', projectsRouter);
 
 servicesRouter
   .route('/')

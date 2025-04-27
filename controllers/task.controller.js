@@ -36,15 +36,20 @@ export const isAuthorized = (
 const createTask = asyncHandler(async (req, res) => {
   // Add the client ID to the project
   req.body.client = req.user._id;
-
+  // Check if there are uploaded files
+  if (req.files && req.files.length > 0) {
+    // Store file references in the task
+    req.body.requirement = req.files.map(file => ({
+      fileName: file.originalname,
+      fileUrl: file.path,
+    }));
+  }
   // Create the project
   const task = await Task.create(req.body);
 
   res.status(201).json({
     status: 'success',
-    data: {
-      task,
-    },
+    data: task,
   });
 });
 
@@ -63,9 +68,25 @@ const getAllTasks = asyncHandler(async (req, res) => {
   res.status(200).json({
     status: 'success',
     results: tasks.length,
-    data: {
-      tasks,
-    },
+    data: tasks,
+  });
+});
+/**
+ * @desc    Get all Task
+ * @route   GET /api/v1/tasks
+ * @access  Private (client)
+ */
+const getAllMyTasks = asyncHandler(async (req, res) => {
+  // Get all tasks
+  const tasks = await Task.find({ client: req.user._id })
+    .populate('client', 'name email')
+    .populate('category', 'name')
+    .populate('service', 'name');
+
+  res.status(200).json({
+    status: 'success',
+    results: tasks.length,
+    data: tasks,
   });
 });
 
@@ -88,9 +109,7 @@ const getTasksByInterest = asyncHandler(async (req, res) => {
   res.status(200).json({
     status: 'success',
     results: tasks.length,
-    data: {
-      tasks,
-    },
+    data: tasks,
   });
 });
 
@@ -112,9 +131,7 @@ const getSpecificTask = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      task,
-    },
+    data: task,
   });
 });
 
@@ -141,9 +158,7 @@ const updateSpecificTask = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      task: updatedTask,
-    },
+    data: updatedTask,
   });
 });
 
@@ -203,9 +218,7 @@ const addTaskFiles = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      task,
-    },
+    data: task,
   });
 });
 
@@ -238,9 +251,7 @@ const deleteTaskFile = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      task,
-    },
+    data: task,
   });
 });
 
@@ -248,6 +259,7 @@ export {
   createTask,
   getAllTasks,
   getTasksByInterest,
+  getAllMyTasks,
   getSpecificTask,
   updateSpecificTask,
   deleteSpecificTask,

@@ -8,9 +8,16 @@ import {
   addTaskFiles,
   deleteTaskFile,
   getTasksByInterest,
+  getAllMyTasks,
 } from '../controllers/task.controller.js';
 import { protectedRoutes, allowTo } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
+import {
+  createTaskValidator,
+  updateTaskValidator,
+  getSpecificTaskValidator,
+  deleteSpecificTaskValidator,
+} from '../utils/validators/taskValidator.js';
 
 const taskRouter = express.Router();
 const upload = createUploader();
@@ -22,15 +29,16 @@ taskRouter.use(protectedRoutes);
 taskRouter
   .route('/')
   .get(getAllTasks)
-  .post(upload.array('requirment'), createTask);
+  .post(upload.array('requirment'), createTaskValidator, createTask);
 
 taskRouter.route('/interests').get(getTasksByInterest);
+taskRouter.route('/me').get(getAllMyTasks);
 
 taskRouter
   .route('/:id')
-  .get(getSpecificTask)
-  .put(updateSpecificTask)
-  .delete(deleteSpecificTask);
+  .get(getSpecificTaskValidator, getSpecificTask)
+  .put(updateTaskValidator, updateSpecificTask)
+  .delete(deleteSpecificTaskValidator, deleteSpecificTask);
 
 // Task Files Routes
 taskRouter

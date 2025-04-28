@@ -67,7 +67,11 @@ const getAllTasks = asyncHandler(async (req, res) => {
   const tasks = await Task.find()
     .populate('client', 'name email')
     .populate('category', 'name')
-    .populate('service', 'name');
+    .populate({
+      path: 'service',
+      select: 'name',
+      model: 'Service',
+    });
 
   res.status(200).json({
     status: 'success',
@@ -86,7 +90,11 @@ const getAllMyTasks = asyncHandler(async (req, res) => {
   const tasks = await Task.find({ client: req.user._id })
     .populate('client', 'name email')
     .populate('category', 'name')
-    .populate('service', 'name');
+    .populate({
+      path: 'service',
+      select: 'name',
+      model: 'Service',
+    });
 
   res.status(200).json({
     status: 'success',
@@ -109,7 +117,11 @@ const getTasksByInterest = asyncHandler(async (req, res) => {
   })
     .populate('client', 'name email')
     .populate('category', 'name')
-    .populate('service', 'name');
+    .populate({
+      path: 'service',
+      select: 'name',
+      model: 'Service',
+    });
 
   res.status(200).json({
     status: 'success',
@@ -127,7 +139,11 @@ const getSpecificTask = asyncHandler(async (req, res, next) => {
   const task = await Task.findById(req.params.id)
     .populate('client', 'name email')
     .populate('category', 'name')
-    .populate('service', 'name')
+    .populate({
+      path: 'service',
+      select: 'name',
+      model: 'Service',
+    })
     .populate('assignedTeam', 'name logo');
 
   if (!task) {

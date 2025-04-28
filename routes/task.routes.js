@@ -10,6 +10,13 @@ import {
   getTasksByInterest,
   getAllMyTasks,
 } from '../controllers/task.controller.js';
+import {
+  createTaskRequest,
+  getTaskRequests,
+  acceptTaskRequest,
+  rejectTaskRequest,
+  deleteTaskRequest,
+} from '../controllers/taskRequests.controller.js';
 import { protectedRoutes, allowTo } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
 import {
@@ -20,7 +27,8 @@ import {
 } from '../utils/validators/taskValidator.js';
 
 const taskRouter = express.Router();
-const upload = createUploader("tasksRequirment");
+const upload = createUploader('tasksRequirment');
+const uploadRequestImage = createUploader('propasl');
 
 // Protect all routes after this middleware
 taskRouter.use(protectedRoutes);
@@ -46,5 +54,21 @@ taskRouter
   .post(upload.array('taskFiles'), addTaskFiles);
 
 taskRouter.route('/:taskId/task-files/:fileId').delete(deleteTaskFile);
+
+// Task Requests Routes
+taskRouter
+  .route('/:taskId/requests')
+  .get(getTaskRequests)
+  .post(uploadRequestImage.array('proposal'), createTaskRequest);
+
+taskRouter.route('/:taskId/requests/:requestId').delete(deleteTaskRequest);
+
+taskRouter
+  .route('/:taskId/requests/:requestId/accept')
+  .patch(acceptTaskRequest);
+
+taskRouter
+  .route('/:taskId/requests/:requestId/reject')
+  .patch(rejectTaskRequest);
 
 export default taskRouter;

@@ -41,6 +41,46 @@ const taskSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Team',
     },
+    teamRequests: [
+      {
+        team: {
+          type: mongoose.Schema.ObjectId,
+          ref: 'Team',
+          required: true,
+        },
+        note: {
+          type: String,
+          required: true,
+        },
+        proposal: [String],
+        budget: {
+          type: Number,
+        },
+        similarProjectUrl: {
+          type: String,
+        },
+        similarProjectImage: {
+          type: String,
+        },
+        status: {
+          type: String,
+          enum: ['pending', 'accepted', 'rejected'],
+          default: 'pending',
+        },
+        appliedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        responseAt: {
+          type: Date,
+        },
+        responseBy: {
+          type: mongoose.Schema.ObjectId,
+          ref: 'User', // Team Leader or Admin
+        },
+      },
+    ],
+
     requirment: [
       {
         fileName: String,

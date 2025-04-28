@@ -44,6 +44,14 @@ const createTaskRequest = asyncHandler(async (req, res, next) => {
   const existingRequest = task.teamRequests.find(
     request => request.team.toString() === teamId.toString()
   );
+
+  // Check if task is fixed price
+  if (task.isFixedPrice) {
+    if (budget) {
+      return next(new ApiError('Cannot send budget for fixed price task', 400));
+    }
+  }
+
   if (existingRequest) {
     switch (existingRequest.status) {
       case 'pending':
@@ -129,7 +137,7 @@ const getTaskRequests = asyncHandler(async (req, res, next) => {
 
 // ==========================================
 // Accept Task Request
-// ==========================================
+// ==================== ======================
 const acceptTaskRequest = asyncHandler(async (req, res, next) => {
   const { taskId, requestId } = req.params;
   const task = await canManageTaskRequest(req.user._id, taskId);

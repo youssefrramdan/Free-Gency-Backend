@@ -11,6 +11,10 @@ const taskSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    isFixedPrice: {
+      type: Boolean,
+      default: false,
+    },
     budget: {
       type: Number,
     },

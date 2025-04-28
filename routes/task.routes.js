@@ -27,7 +27,7 @@ import {
 } from '../utils/validators/taskValidator.js';
 
 const taskRouter = express.Router();
-const upload = createUploader('tasksRequirment');
+const upload = createUploader('tasksRequirement');
 const uploadRequestImage = createUploader('propasl');
 
 // Protect all routes after this middleware

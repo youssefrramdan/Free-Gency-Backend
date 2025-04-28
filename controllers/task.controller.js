@@ -37,15 +37,15 @@ const createTask = asyncHandler(async (req, res) => {
   // Add the client ID to the project
   req.body.client = req.user._id;
 
-  const requirment = [];
+  const requirement = [];
   if (req.files && req.files.length > 0) {
     req.files.forEach(file => {
-      requirment.push({
+      requirement.push({
         fileName: file.originalname,
         fileUrl: file.path,
       });
     });
-    req.body.requirment = requirment;
+    req.body.requirement = requirement;
   }
 
   // Create the task

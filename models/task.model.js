@@ -18,7 +18,7 @@ const taskSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Category',
     },
-    services: {
+    service: {
       type: mongoose.Schema.ObjectId,
       ref: 'Service',
     },
@@ -57,9 +57,6 @@ const taskSchema = new mongoose.Schema(
           type: Number,
         },
         similarProjectUrl: {
-          type: String,
-        },
-        similarProjectImage: {
           type: String,
         },
         status: {

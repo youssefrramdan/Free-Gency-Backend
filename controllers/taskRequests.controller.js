@@ -102,15 +102,18 @@ const createTaskRequest = asyncHandler(async (req, res, next) => {
 // ==========================================
 const getTaskRequests = asyncHandler(async (req, res, next) => {
   const { taskId } = req.params;
-  const task = await Task.findById(taskId).populate(
+
+  const task = await canManageTaskRequest(req.user._id, taskId);
+
+  if (!task) return next(new ApiError('Task not found', 404));
+
+  const taskWithRequests = await Task.findById(taskId).populate(
     'teamRequests.team',
     'name'
   );
 
-  if (!task) return next(new ApiError('Task not found', 404));
-
   const grouped = { pending: [], accepted: [], rejected: [] };
-  for (const request of task.teamRequests) {
+  for (const request of taskWithRequests.teamRequests) {
     grouped[request.status]?.push(request);
   }
 

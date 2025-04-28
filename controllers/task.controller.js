@@ -75,13 +75,14 @@ const getAllTasks = asyncHandler(async (req, res) => {
     data: tasks,
   });
 });
+
 /**
  * @desc    Get all Task
  * @route   GET /api/v1/tasks
  * @access  Private (client)
  */
 const getAllMyTasks = asyncHandler(async (req, res) => {
-  // Get all tasks
+  // Get tasks for the authenticated client
   const tasks = await Task.find({ client: req.user._id })
     .populate('client', 'name email')
     .populate('category', 'name')
@@ -130,7 +131,15 @@ const getSpecificTask = asyncHandler(async (req, res, next) => {
     .populate('assignedTeam', 'name logo');
 
   if (!task) {
-    next(new ApiError('Task not found', 404));
+    return next(new ApiError('Task not found', 404));
+  }
+
+  // Check if user is authorized (either admin or the client who created the task)
+  if (
+    req.user.role !== 'admin' &&
+    task.client.toString() !== req.user._id.toString()
+  ) {
+    return next(new ApiError('Not authorized to access this task', 403));
   }
 
   res.status(200).json({
@@ -148,13 +157,17 @@ const updateSpecificTask = asyncHandler(async (req, res, next) => {
   const task = await Task.findById(req.params.id);
 
   if (!task) {
-    next(new ApiError('Task not found', 404));
+    return next(new ApiError('Task not found', 404));
   }
 
-  // Check if user is the client who created the task
-  isAuthorized(req.user._id, task.client, 'update this task');
+  // Check if user is authorized (either admin or the client who created the task)
+  if (
+    req.user.role !== 'admin' &&
+    task.client.toString() !== req.user._id.toString()
+  ) {
+    return next(new ApiError('Not authorized to update this task', 403));
+  }
 
-  // Update task
   const updatedTask = await Task.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
@@ -175,17 +188,22 @@ const deleteSpecificTask = asyncHandler(async (req, res, next) => {
   const task = await Task.findById(req.params.id);
 
   if (!task) {
-    next(new ApiError('Task not found', 404));
+    return next(new ApiError('Task not found', 404));
   }
 
-  // Check if user is the client who created the task
-  isAuthorized(req.user._id, task.client, 'delete this task');
+  // Check if user is authorized (either admin or the client who created the task)
+  if (
+    req.user.role !== 'admin' &&
+    task.client.toString() !== req.user._id.toString()
+  ) {
+    return next(new ApiError('Not authorized to delete this task', 403));
+  }
 
-  // Delete task
   await Task.findByIdAndDelete(req.params.id);
 
   res.status(204).json({
     status: 'success',
+    data: null,
   });
 });
 

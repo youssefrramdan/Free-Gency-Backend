@@ -88,14 +88,7 @@ const getAllTasks = asyncHandler(async (req, res) => {
 const getAllMyTasks = asyncHandler(async (req, res) => {
   // Get tasks for the authenticated client
   const clientId = req.user._id;
-  const tasks = await Task.find({ client: clientId })
-    .populate('client', 'name email')
-    .populate('category', 'name')
-    .populate({
-      path: 'service',
-      select: 'name',
-      model: 'Service',
-    });
+  const tasks = await Task.find({ client: clientId }).select("-category -service -client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v");
   // Count posted (all tasks), in-progress, and completed
   const [posted, inProgress, completed] = await Promise.all([
     Task.countDocuments({ client: clientId }),

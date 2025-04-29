@@ -40,6 +40,22 @@ const ProjectsSchema = new mongoose.Schema(
       enum: ['public', 'private'],
       default: 'public',
     },
+    ratings: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Review',
+      },
+    ],
+    averageRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    ratingCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -50,6 +66,22 @@ const ProjectsSchema = new mongoose.Schema(
 ProjectsSchema.index({ team: 1 });
 ProjectsSchema.index({ category: 1 });
 ProjectsSchema.index({ visibility: 1 });
+
+// Add method to update average rating
+ProjectsSchema.methods.updateAverageRating = async function () {
+  const ratings = await mongoose
+    .model('Review')
+    .find({ ratedProject: this._id });
+  if (ratings.length > 0) {
+    const totalRating = ratings.reduce((sum, rating) => sum + rating.rating, 0);
+    this.averageRating = totalRating / ratings.length;
+    this.ratingCount = ratings.length;
+  } else {
+    this.averageRating = 0;
+    this.ratingCount = 0;
+  }
+  await this.save();
+};
 
 const Projects = mongoose.model('Projects', ProjectsSchema);
 export default Projects;

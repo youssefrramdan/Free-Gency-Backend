@@ -86,17 +86,21 @@ const teamSchema = new mongoose.Schema(
       },
     ],
 
-    rating: {
-      average: {
-        type: Number,
-        default: 0,
-        min: 0,
-        max: 5,
+    ratings: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Review',
       },
-      count: {
-        type: Number,
-        default: 0,
-      },
+    ],
+    averageRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    ratingCount: {
+      type: Number,
+      default: 0,
     },
     status: {
       type: String,
@@ -133,6 +137,20 @@ teamSchema.methods.addMember = async function (userId, job) {
     job,
     joinedAt: Date.now(),
   });
+  await this.save();
+};
+
+// Add method to update average rating
+teamSchema.methods.updateAverageRating = async function () {
+  const ratings = await mongoose.model('Review').find({ ratedTeam: this._id });
+  if (ratings.length > 0) {
+    const totalRating = ratings.reduce((sum, rating) => sum + rating.rating, 0);
+    this.averageRating = totalRating / ratings.length;
+    this.ratingCount = ratings.length;
+  } else {
+    this.averageRating = 0;
+    this.ratingCount = 0;
+  }
   await this.save();
 };
 

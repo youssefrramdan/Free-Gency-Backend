@@ -33,7 +33,7 @@ const taskSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['open', 'in-progress', 'completed', 'cancelled'],
+      enum: ['open', 'in-progress', 'completed'],
       default: 'open',
     },
     client: {
@@ -103,7 +103,7 @@ const taskSchema = new mongoose.Schema(
       {
         status: {
           type: String,
-          enum: ['open', 'in-progress', 'completed', 'cancelled'],
+          enum: ['open', 'in-progress', 'completed'],
           default: 'open',
         },
         note: String, // Optional note about the change in status

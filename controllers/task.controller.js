@@ -87,7 +87,8 @@ const getAllTasks = asyncHandler(async (req, res) => {
  */
 const getAllMyTasks = asyncHandler(async (req, res) => {
   // Get tasks for the authenticated client
-  const tasks = await Task.find({ client: req.user._id })
+  const clientId = req.user._id;
+  const tasks = await Task.find({ client: clientId })
     .populate('client', 'name email')
     .populate('category', 'name')
     .populate({
@@ -95,11 +96,22 @@ const getAllMyTasks = asyncHandler(async (req, res) => {
       select: 'name',
       model: 'Service',
     });
+  // Count posted (all tasks), in-progress, and completed
+  const [posted, inProgress, completed] = await Promise.all([
+    Task.countDocuments({ client: clientId }),
+    Task.countDocuments({ client: clientId, status: 'in-progress' }),
+    Task.countDocuments({ client: clientId, status: 'completed' }),
+  ]);
 
   res.status(200).json({
     status: 'success',
     results: tasks.length,
-    data: tasks,
+    data: {
+      postedProjects: posted,
+      projectsInProgress: inProgress,
+      completedProjects: completed,
+      tasks,
+    },
   });
 });
 
@@ -219,7 +231,6 @@ const deleteSpecificTask = asyncHandler(async (req, res, next) => {
 
   res.status(204).json({
     status: 'success',
-    data: null,
   });
 });
 

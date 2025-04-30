@@ -1,6 +1,8 @@
 import asyncHandler from 'express-async-handler';
 import Task from '../models/task.model.js';
 import ApiError from '../utils/apiError.js';
+import NotificationService from '../service/NotificationService.js';
+import User from '../models/user.model.js';
 
 // ==========================================
 // Authorization helper
@@ -30,7 +32,7 @@ const createTaskRequest = asyncHandler(async (req, res, next) => {
 
   if (!note) return next(new ApiError('Note is required', 400));
 
-  const task = await Task.findById(taskId);
+  const task = await Task.findById(taskId).populate('client', 'fcmToken');
   if (!task) return next(new ApiError('Task not found', 404));
 
   // Check if task is already assigned
@@ -82,7 +84,7 @@ const createTaskRequest = asyncHandler(async (req, res, next) => {
   }
 
   // Add new request
-  task.teamRequests.push({
+  const newRequest = {
     team: teamId,
     note,
     proposal: proposalFiles,
@@ -91,9 +93,20 @@ const createTaskRequest = asyncHandler(async (req, res, next) => {
     similarProjectImage,
     status: 'pending',
     appliedAt: new Date(),
-  });
+  };
+
+  task.teamRequests.push(newRequest);
 
   await task.save();
+
+  // Send notification to client
+  if (task.client.fcmToken) {
+    await NotificationService.sendNotification(
+      task.client.fcmToken,
+      '🎯 New Task Request',
+      `📌 ${task.title}\n👥 Team has sent a request for your task\n💰 Proposed Budget: ${budget} SAR\n📝 ${note.substring(0, 100)}...`
+    );
+  }
 
   res.status(201).json({
     status: 'success',
@@ -139,8 +152,16 @@ const getTaskRequests = asyncHandler(async (req, res, next) => {
 // Accept Task Request
 // ==================== ======================
 const acceptTaskRequest = asyncHandler(async (req, res, next) => {
-  const { taskId, requestId } = req.params;
-  const task = await canManageTaskRequest(req.user._id, taskId);
+  const { requestId } = req.params;
+
+  // Find task that contains this request
+  const task = await Task.findOne({ 'teamRequests._id': requestId });
+  if (!task) return next(new ApiError('Request not found', 404));
+
+  // Check if user is authorized (client of the task)
+  if (task.client.toString() !== req.user._id.toString()) {
+    return next(new ApiError('Not authorized to manage this request', 403));
+  }
 
   const request = task.teamRequests.id(requestId);
   if (!request) return next(new ApiError('Request not found', 404));
@@ -150,7 +171,8 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
   request.responseAt = new Date();
   request.responseBy = req.user._id;
 
-  // Assign team to task
+  // Update task with requested budget and assign team
+  task.budget = request.budget;
   task.assignedTeam = request.team;
   task.status = 'in-progress';
 
@@ -175,8 +197,16 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
 // Reject Task Request
 // ==========================================
 const rejectTaskRequest = asyncHandler(async (req, res, next) => {
-  const { taskId, requestId } = req.params;
-  const task = await canManageTaskRequest(req.user._id, taskId);
+  const { requestId } = req.params;
+
+  // Find task that contains this request
+  const task = await Task.findOne({ 'teamRequests._id': requestId });
+  if (!task) return next(new ApiError('Request not found', 404));
+
+  // Check if user is authorized (client of the task)
+  if (task.client.toString() !== req.user._id.toString()) {
+    return next(new ApiError('Not authorized to manage this request', 403));
+  }
 
   const request = task.teamRequests.id(requestId);
   if (!request) return next(new ApiError('Request not found', 404));
@@ -198,10 +228,11 @@ const rejectTaskRequest = asyncHandler(async (req, res, next) => {
 // Delete Task Request
 // ==========================================
 const deleteTaskRequest = asyncHandler(async (req, res, next) => {
-  const { taskId, requestId } = req.params;
-  const task = await Task.findById(taskId);
+  const { requestId } = req.params;
 
-  if (!task) return next(new ApiError('Task not found', 404));
+  // Find task that contains this request
+  const task = await Task.findOne({ 'teamRequests._id': requestId });
+  if (!task) return next(new ApiError('Request not found', 404));
 
   const request = task.teamRequests.id(requestId);
   if (!request) return next(new ApiError('Request not found', 404));
@@ -217,7 +248,7 @@ const deleteTaskRequest = asyncHandler(async (req, res, next) => {
 
   res.status(204).json({
     status: 'success',
-    message: 'Task request deleted successfully',
+    message: 'Task request deleted successfully',   
   });
 });
 

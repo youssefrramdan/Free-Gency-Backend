@@ -61,14 +61,8 @@ taskRouter
   .get(getTaskRequests)
   .post(uploadRequestImage.array('proposal'), createTaskRequest);
 
-taskRouter.route('/:taskId/requests/:requestId').delete(deleteTaskRequest);
-
-taskRouter
-  .route('/:taskId/requests/:requestId/accept')
-  .patch(acceptTaskRequest);
-
-taskRouter
-  .route('/:taskId/requests/:requestId/reject')
-  .patch(rejectTaskRequest);
+taskRouter.route('/requests/:requestId/accept').patch(acceptTaskRequest);
+taskRouter.route('/requests/:requestId/reject').patch(rejectTaskRequest);
+taskRouter.route('/requests/:requestId').delete(deleteTaskRequest);
 
 export default taskRouter;

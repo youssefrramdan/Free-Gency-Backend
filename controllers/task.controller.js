@@ -1,6 +1,8 @@
 import asyncHandler from 'express-async-handler';
 import ApiError from '../utils/apiError.js';
 import Task from '../models/task.model.js';
+import Team from '../models/team.model.js';
+import NotificationService from '../service/NotificationService.js';
 
 // ==========================================
 // Authorization Helper
@@ -51,6 +53,21 @@ const createTask = asyncHandler(async (req, res) => {
   // Create the task
   const task = await Task.create(req.body);
 
+  // Send notifications to teams with matching category
+  const teams = await Team.find().populate('teamLeader', 'fcmToken');
+  const taskWithClient = await Task.findById(task._id).populate(
+    'client',
+    'name profileImage'
+  );
+
+  await NotificationService.sendTeamNotificationsByCategory(
+    teams,
+    task.category,
+    '🎯 New Task Available',
+    `📌 ${task.title}\n👤 Posted by: ${taskWithClient.client.name}\n💰 Budget: ${task.budget} SAR\n⏰ Duration: ${task.duration} days\n📝 ${task.description.substring(0, 100)}...`,
+    taskWithClient.client.profileImage
+  );
+
   res.status(201).json({
     status: 'success',
     data: task,
@@ -88,7 +105,9 @@ const getAllTasks = asyncHandler(async (req, res) => {
 const getAllMyTasks = asyncHandler(async (req, res) => {
   // Get tasks for the authenticated client
   const clientId = req.user._id;
-  const tasks = await Task.find({ client: clientId }).select("-category -service -client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v");
+  const tasks = await Task.find({ client: clientId }).select(
+    '-category -service -client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v'
+  );
   // Count posted (all tasks), in-progress, and completed
   const [posted, inProgress, completed] = await Promise.all([
     Task.countDocuments({ client: clientId }),
@@ -295,6 +314,21 @@ const deleteTaskFile = asyncHandler(async (req, res) => {
     data: task,
   });
 });
+
+// Send notifications to teams with matching category
+const sendTaskNotification = async (category, taskTitle) => {
+  try {
+    const teams = await Team.find().populate('members');
+    await NotificationService.sendTeamNotificationsByCategory(
+      teams,
+      category,
+      'مهمة جديدة',
+      `تم إضافة مهمة جديدة: ${taskTitle}`
+    );
+  } catch (error) {
+    console.error('Error sending notifications:', error);
+  }
+};
 
 export {
   createTask,

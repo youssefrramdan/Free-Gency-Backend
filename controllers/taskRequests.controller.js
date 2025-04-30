@@ -2,18 +2,15 @@ import asyncHandler from 'express-async-handler';
 import Task from '../models/task.model.js';
 import ApiError from '../utils/apiError.js';
 import NotificationService from '../service/NotificationService.js';
-import User from '../models/user.model.js';
+import Team from '../models/team.model.js';
 
 // ==========================================
 // Authorization helper
 // ==========================================
 const canManageTaskRequest = async (userId, taskId) => {
   const task = await Task.findById(taskId);
-  if (!task) {
-    throw new ApiError('Task not found', 404);
-  }
-  const isClient = task.client.toString() === userId.toString();
-  if (!isClient) {
+  if (!task) throw new ApiError('Task not found', 404);
+  if (task.client.toString() !== userId.toString()) {
     throw new ApiError(
       'You are not authorized to manage this task request',
       403
@@ -23,37 +20,43 @@ const canManageTaskRequest = async (userId, taskId) => {
 };
 
 // ==========================================
+// Helper to build notification message
+// ==========================================
+const buildNotificationMessage = (task, teamLeader, notification) =>
+  `📌 ${task.title}\n👥 ${teamLeader.name} has sent a request for your task\n💰 Proposed Budget: ${notification.budget} SAR\n📝 ${notification.note.substring(0, 100)}...`;
+
+// ==========================================
+// Send notification helper
+// ==========================================
+const sendNotificationToTeam = async (token, title, message, image) => {
+  if (token) {
+    await NotificationService.sendNotification(token, title, message, image);
+  }
+};
+
+// ==========================================
 // Create Task Request
 // ==========================================
 const createTaskRequest = asyncHandler(async (req, res, next) => {
   const { taskId } = req.params;
   const { note, budget, similarProjectUrl, similarProjectImage } = req.body;
-  const teamId = req.user.createdTeam; // Get team ID from authenticated user's team
+  const teamId = req.user.createdTeam;
 
   if (!note) return next(new ApiError('Note is required', 400));
 
-  const task = await Task.findById(taskId).populate('client', 'fcmToken');
+  const task = await Task.findById(taskId)
+    .populate('client', 'fcmToken')
+    .populate('teamRequests.team.teamLeader', 'fcmToken name profileImage');
   if (!task) return next(new ApiError('Task not found', 404));
 
-  // Check if task is already assigned
-  if (task.assignedTeam) {
+  if (task.assignedTeam)
     return next(
       new ApiError('This task is already assigned to another team', 400)
     );
-  }
 
-  // Check for existing request
   const existingRequest = task.teamRequests.find(
     request => request.team.toString() === teamId.toString()
   );
-
-  // Check if task is fixed price
-  if (task.isFixedPrice) {
-    if (budget) {
-      return next(new ApiError('Cannot send budget for fixed price task', 400));
-    }
-  }
-
   if (existingRequest) {
     switch (existingRequest.status) {
       case 'pending':
@@ -61,7 +64,6 @@ const createTaskRequest = asyncHandler(async (req, res, next) => {
       case 'accepted':
         return next(new ApiError('Already accepted for this task', 400));
       case 'rejected':
-        // Remove rejected request to allow new one
         task.teamRequests = task.teamRequests.filter(
           request => request.team.toString() !== teamId.toString()
         );
@@ -72,14 +74,14 @@ const createTaskRequest = asyncHandler(async (req, res, next) => {
   }
 
   // Handle proposal files
-  const proposalFiles = [];
-  if (req.files && req.files.length > 0) {
-    req.files.forEach(file => {
-      proposalFiles.push(file.path);
-    });
-  }
+  const proposalFiles = req.files
+    ? req.files.map(file => ({
+        fileName: file.originalname,
+        fileUrl: file.path,
+        uploadedAt: new Date(),
+      }))
+    : [];
 
-  // Add new request
   const newRequest = {
     team: teamId,
     note,
@@ -92,15 +94,24 @@ const createTaskRequest = asyncHandler(async (req, res, next) => {
   };
 
   task.teamRequests.push(newRequest);
-
   await task.save();
+
+  const team = await Team.findById(teamId).populate(
+    'teamLeader',
+    'fcmToken name profileImage'
+  );
 
   // Send notification to client
   if (task.client.fcmToken) {
-    await NotificationService.sendNotification(
+    await sendNotificationToTeam(
       task.client.fcmToken,
       '🎯 New Task Request',
-      `📌 ${task.title}\n👥 Team has sent a request for your task\n💰 Proposed Budget: ${budget} SAR\n📝 ${note.substring(0, 100)}...`
+      buildNotificationMessage(task, team.teamLeader, {
+        ...newRequest,
+        budget,
+        note,
+      }),
+      team.teamLeader.profileImage
     );
   }
 
@@ -119,68 +130,70 @@ const createTaskRequest = asyncHandler(async (req, res, next) => {
 // ==========================================
 const getTaskRequests = asyncHandler(async (req, res, next) => {
   const { taskId } = req.params;
-
   const task = await canManageTaskRequest(req.user._id, taskId);
-
-  if (!task) return next(new ApiError('Task not found', 404));
 
   const taskWithRequests = await Task.findById(taskId).populate(
     'teamRequests.team',
     'name'
   );
-
   const grouped = { pending: [], accepted: [], rejected: [] };
-  taskWithRequests.teamRequests.forEach(request => {
-    if (grouped[request.status]) {
-      grouped[request.status].push(request);
-    }
-  });
+
+  taskWithRequests.teamRequests.forEach(request =>
+    grouped[request.status]?.push(request)
+  );
 
   res.status(200).json({
     status: 'success',
-    data: {
-      pending: { count: grouped.pending.length, requests: grouped.pending },
-      accepted: { count: grouped.accepted.length, requests: grouped.accepted },
-      rejected: { count: grouped.rejected.length, requests: grouped.rejected },
-    },
+    data: grouped,
   });
 });
 
 // ==========================================
 // Accept Task Request
-// ==================== ======================
+// ==========================================
 const acceptTaskRequest = asyncHandler(async (req, res, next) => {
   const { requestId } = req.params;
+  const task = await Task.findOne({ 'teamRequests._id': requestId })
+    .populate('client', 'fcmToken profileImage')
+    .populate('teamRequests.team.teamLeader', 'fcmToken name profileImage');
 
-  // Find task that contains this request
-  const task = await Task.findOne({ 'teamRequests._id': requestId });
-  if (!task) return next(new ApiError('Request not found', 404));
-
-  // Check if user is authorized (client of the task)
-  if (task.client.toString() !== req.user._id.toString()) {
-    return next(new ApiError('Not authorized to manage this request', 403));
+  if (!task || task.client.toString() !== req.user._id.toString()) {
+    return next(new ApiError('Request not found or unauthorized', 403));
   }
 
   const request = task.teamRequests.id(requestId);
-  if (!request) return next(new ApiError('Request not found', 404));
-
-  // Update request status
   request.status = 'accepted';
   request.responseAt = new Date();
   request.responseBy = req.user._id;
 
-  // Update task with requested budget and assign team
-  task.budget = request.budget;
+  // Notify the accepted team leader
+  await sendNotificationToTeam(
+    request.team.teamLeader.fcmToken,
+    '🎯 Task Request Accepted',
+    buildNotificationMessage(task, task.client, request),
+    task.client.profileImage
+  );
+
+  // Update task status
   task.assignedTeam = request.team;
   task.status = 'in-progress';
 
-  // Reject all other pending requests
-  task.teamRequests.forEach(reqItem => {
-    if (reqItem.status === 'pending' && reqItem._id.toString() !== requestId) {
-      reqItem.status = 'rejected';
-      reqItem.responseAt = new Date();
-    }
-  });
+  // Reject other pending requests and notify
+  task.teamRequests
+    .filter(
+      reqItem =>
+        reqItem.status === 'pending' && reqItem._id.toString() !== requestId
+    )
+    .forEach(rejectedRequest => {
+      rejectedRequest.status = 'rejected';
+      rejectedRequest.responseAt = new Date();
+      sendNotificationToTeam(
+        rejectedRequest.team.teamLeader.fcmToken,
+        '🎯 Task Request Rejected',
+        buildNotificationMessage(task, task.client, rejectedRequest),
+        task.client.profileImage
+      );
+    });
 
   await task.save();
 
@@ -196,22 +209,26 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
 // ==========================================
 const rejectTaskRequest = asyncHandler(async (req, res, next) => {
   const { requestId } = req.params;
+  const task = await Task.findOne({ 'teamRequests._id': requestId })
+    .populate('client', 'fcmToken profileImage')
+    .populate('teamRequests.team.teamLeader', 'fcmToken name profileImage');
 
-  // Find task that contains this request
-  const task = await Task.findOne({ 'teamRequests._id': requestId });
-  if (!task) return next(new ApiError('Request not found', 404));
-
-  // Check if user is authorized (client of the task)
-  if (task.client.toString() !== req.user._id.toString()) {
-    return next(new ApiError('Not authorized to manage this request', 403));
+  if (!task || task.client.toString() !== req.user._id.toString()) {
+    return next(new ApiError('Request not found or unauthorized', 403));
   }
 
   const request = task.teamRequests.id(requestId);
-  if (!request) return next(new ApiError('Request not found', 404));
-
   request.status = 'rejected';
   request.responseAt = new Date();
   request.responseBy = req.user._id;
+
+  // Notify the team leader of rejection
+  await sendNotificationToTeam(
+    request.team.teamLeader.fcmToken,
+    '🎯 Task Request Rejected',
+    buildNotificationMessage(task, task.client, request),
+    task.client.profileImage
+  );
 
   await task.save();
 
@@ -227,21 +244,14 @@ const rejectTaskRequest = asyncHandler(async (req, res, next) => {
 // ==========================================
 const deleteTaskRequest = asyncHandler(async (req, res, next) => {
   const { requestId } = req.params;
-
-  // Find task that contains this request
   const task = await Task.findOne({ 'teamRequests._id': requestId });
   if (!task) return next(new ApiError('Request not found', 404));
 
   const request = task.teamRequests.id(requestId);
-  if (!request) return next(new ApiError('Request not found', 404));
-
-  // Only allow deletion if request is pending
-  if (request.status !== 'pending') {
+  if (!request || request.status !== 'pending')
     return next(new ApiError('Can only delete pending requests', 400));
-  }
 
   task.teamRequests.pull(requestId);
-
   await task.save();
 
   res.status(204).json({

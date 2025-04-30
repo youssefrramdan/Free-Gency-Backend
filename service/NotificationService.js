@@ -1,7 +1,7 @@
 import admin from '../firebase/firebase.js';
 
 class NotificationService {
-  static async sendNotification(deviceToken, title, body) {
+  static async sendNotification(deviceToken, title, body, imageUrl = null) {
     const message = {
       notification: {
         title,
@@ -9,6 +9,12 @@ class NotificationService {
       },
       token: deviceToken,
     };
+
+    // Add image to notification if provided
+    if (imageUrl) {
+      message.notification.imageUrl = imageUrl;
+    }
+
     const response = await admin.messaging().send(message);
     return response;
   }

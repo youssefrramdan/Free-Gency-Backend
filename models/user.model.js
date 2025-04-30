@@ -72,6 +72,11 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    fcmToken: {
+      type: String,
+      default:
+        'dgJuDowLRa-Y5JOcjfzlCM:APA91bG5mL9uHKDYCb9Vx_Km1eAci0tR4_2SwUTbghzt1uqFMS8ktO3_clFV-Hj5TJwuS2mGnz-1fUtaHsx_hqi6qbv7RC1eB4tMpjFTmMZg-Plv9uDWGXg',
+    },
   },
   {
     timestamps: true,
@@ -79,9 +84,11 @@ const userSchema = new mongoose.Schema(
 );
 // Remove interests population from pre-find middleware
 userSchema.pre(/^find/, function (next) {
-  this.select('-__v -createdAt -updatedAt');
+  this.select('-__v -createdAt -updatedAt -ratedUser');
   next();
 });
+
+
 
 // Hash password middleware
 userSchema.pre('save', async function (next) {

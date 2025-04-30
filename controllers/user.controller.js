@@ -106,10 +106,19 @@ const deleteUser = asyncHandler(async (req, res, next) => {
  * @access  Private
  */
 const getMe = asyncHandler(async (req, res, next) => {
-  const user = await User.findById(req.user._id).populate({
-    path: 'interests',
-    select: 'name image status',
-  });
+  const user = await User.findById(req.user._id)
+    .populate({
+      path: 'interests',
+      select: 'name image status',
+    })
+    .populate({
+      path: 'ratings',
+      select: '-__v -createdAt -updatedAt -ratedUser',
+      populate: {
+        path: 'ratedBy',
+        select: 'name profileImage -_id',
+      },
+    });
   res.status(200).json({
     message: 'success',
     user,

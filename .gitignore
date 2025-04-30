@@ -4,5 +4,3 @@ node_modules/
 # config/config.env
 Free-Gency-Api.postman_collection.json
 Free Gency - Prod.postman_environment.json/
-services/
-firebase/

@@ -1,5 +1,5 @@
 import asyncHandler from 'express-async-handler';
-import admin from '../firebaseInit.js';
+import admin from '../firebase/firebase.js';
 import ApiError from '../utils/apiError.js';
 
 /**

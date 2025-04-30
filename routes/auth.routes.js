@@ -8,7 +8,10 @@ import {
   forgetPassword,
   verifyResetCode,
   resetPassword,
+  logout,
+  protectedRoutes,
 } from '../controllers/auth.controller.js';
+
 import {
   signUpValidator,
   loginValidator,
@@ -20,7 +23,6 @@ import {
 } from '../utils/validators/authValidator.js';
 
 const authRouter = express.Router();
-
 
 authRouter.route('/signup').post(signUpValidator, signup);
 
@@ -43,5 +45,7 @@ authRouter
   .post(verifyResetCodeValidator, verifyResetCode);
 
 authRouter.route('/reset-password').post(resetPasswordValidator, resetPassword);
+
+authRouter.route('/logout').post(protectedRoutes, logout);
 
 export default authRouter;

@@ -121,6 +121,11 @@ const login = asyncHandler(async (req, res, next) => {
     return next(new ApiError('Incorrect email or password', 401));
   }
 
+  // Save FCM token if provided
+  if (req.body.fcmToken) {
+    await user.saveFCMToken(req.body.fcmToken);
+  }
+
   const token = generateToken(user._id);
   res.status(200).json({
     message: 'success',
@@ -335,6 +340,25 @@ const allowTo =
     next();
   };
 
+/**
+ * @desc    Logout
+ * @route   POST /api/v1/auth/logout
+ * @access  Private
+ */
+const logout = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return next(new ApiError('User not found', 404));
+  }
+
+  // Remove FCM token
+  await user.removeFCMToken();
+
+  res.status(200).json({
+    message: 'Logged out successfully',
+  });
+});
+
 export {
   signup,
   signupAndCreateTeam,
@@ -346,4 +370,5 @@ export {
   forgetPassword,
   verifyResetCode,
   resetPassword,
+  logout,
 };

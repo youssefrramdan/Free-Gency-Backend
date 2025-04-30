@@ -88,8 +88,6 @@ userSchema.pre(/^find/, function (next) {
   next();
 });
 
-
-
 // Hash password middleware
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
@@ -127,6 +125,18 @@ userSchema.methods.updateAverageRating = async function () {
     this.averageRating = 0;
     this.ratingCount = 0;
   }
+  await this.save();
+};
+
+// حفظ الـ FCM Token عند الـ Login أو الـ Signup
+userSchema.methods.saveFCMToken = async function (token) {
+  this.fcmToken = token;
+  await this.save();
+};
+
+// مسح الـ FCM Token عند الـ Logout
+userSchema.methods.removeFCMToken = async function () {
+  this.fcmToken = null;
   await this.save();
 };
 

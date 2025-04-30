@@ -17,6 +17,7 @@ import teamRouter from './routes/team.routes.js';
 import taskRouter from './routes/task.routes.js';
 import projectsRouter from './routes/projects.routes.js';
 import reviewRouter from './routes/review.routes.js';
+import firebaseRouter from './routes/fire.routes.js';
 
 dotenv.config({ path: './config/config.env' });
 
@@ -69,6 +70,7 @@ app.use('/api/v1/teams', teamRouter);
 app.use('/api/v1/tasks', taskRouter);
 app.use('/api/v1/projects', projectsRouter);
 app.use('/api/v1/reviews', reviewRouter);
+app.use('/api/v1/firebase', firebaseRouter);
 app.get('/ping', (req, res) => {
   res.status(200).send('pong');
 });

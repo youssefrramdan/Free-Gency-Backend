@@ -153,26 +153,51 @@ const getTaskRequests = asyncHandler(async (req, res, next) => {
 // ==========================================
 const acceptTaskRequest = asyncHandler(async (req, res, next) => {
   const { requestId } = req.params;
-  const task = await Task.findOne({ 'teamRequests._id': requestId })
-    .populate('client', 'fcmToken profileImage')
-    .populate('teamRequests.team.teamLeader', 'fcmToken name profileImage');
 
-  if (!task || task.client.toString() !== req.user._id.toString()) {
-    return next(new ApiError('Request not found or unauthorized', 403));
+  // Find task first without population for authorization check
+  const task = await Task.findOne({ 'teamRequests._id': requestId });
+
+  if (!task) {
+    return next(new ApiError('Task request not found', 404));
   }
 
+  // Check authorization
+  if (task.client.toString() !== req.user._id.toString()) {
+    return next(
+      new ApiError('You are not authorized to manage this task request', 403)
+    );
+  }
+
+  // Now populate needed data for notifications
+  await task.populate('client', 'fcmToken profileImage');
+  await task.populate('teamRequests.team', 'name logo');
+  await task.populate(
+    'teamRequests.team.teamLeader',
+    'fcmToken name profileImage'
+  );
+
   const request = task.teamRequests.id(requestId);
+  if (!request) {
+    return next(new ApiError('Request not found in task', 404));
+  }
+
   request.status = 'accepted';
   request.responseAt = new Date();
   request.responseBy = req.user._id;
 
   // Notify the accepted team leader
-  await sendNotificationToTeam(
-    request.team.teamLeader.fcmToken,
-    '🎯 Task Request Accepted',
-    buildNotificationMessage(task, task.client, request),
-    task.client.profileImage
-  );
+  if (
+    request.team &&
+    request.team.teamLeader &&
+    request.team.teamLeader.fcmToken
+  ) {
+    await sendNotificationToTeam(
+      request.team.teamLeader.fcmToken,
+      '🎯 Task Request Accepted',
+      buildNotificationMessage(task, task.client, request),
+      task.client.profileImage
+    );
+  }
 
   // Update task status
   task.assignedTeam = request.team;
@@ -187,12 +212,19 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
     .forEach(rejectedRequest => {
       rejectedRequest.status = 'rejected';
       rejectedRequest.responseAt = new Date();
-      sendNotificationToTeam(
-        rejectedRequest.team.teamLeader.fcmToken,
-        '🎯 Task Request Rejected',
-        buildNotificationMessage(task, task.client, rejectedRequest),
-        task.client.profileImage
-      );
+
+      if (
+        rejectedRequest.team &&
+        rejectedRequest.team.teamLeader &&
+        rejectedRequest.team.teamLeader.fcmToken
+      ) {
+        sendNotificationToTeam(
+          rejectedRequest.team.teamLeader.fcmToken,
+          '🎯 Task Request Rejected',
+          buildNotificationMessage(task, task.client, rejectedRequest),
+          task.client.profileImage
+        );
+      }
     });
 
   await task.save();
@@ -209,26 +241,50 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
 // ==========================================
 const rejectTaskRequest = asyncHandler(async (req, res, next) => {
   const { requestId } = req.params;
-  const task = await Task.findOne({ 'teamRequests._id': requestId })
-    .populate('client', 'fcmToken profileImage')
-    .populate('teamRequests.team.teamLeader', 'fcmToken name profileImage');
 
-  if (!task || task.client.toString() !== req.user._id.toString()) {
-    return next(new ApiError('Request not found or unauthorized', 403));
+  // Find task first without population for authorization check
+  const task = await Task.findOne({ 'teamRequests._id': requestId });
+
+  if (!task) {
+    return next(new ApiError('Request not found', 404));
   }
 
+  // Check authorization
+  if (task.client.toString() !== req.user._id.toString()) {
+    return next(
+      new ApiError('You are not authorized to manage this task request', 403)
+    );
+  }
+
+  // Now populate data for notifications
+  await task.populate('client', 'fcmToken profileImage');
+  await task.populate(
+    'teamRequests.team.teamLeader',
+    'fcmToken name profileImage'
+  );
+
   const request = task.teamRequests.id(requestId);
+  if (!request) {
+    return next(new ApiError('Request not found in task', 404));
+  }
+
   request.status = 'rejected';
   request.responseAt = new Date();
   request.responseBy = req.user._id;
 
   // Notify the team leader of rejection
-  await sendNotificationToTeam(
-    request.team.teamLeader.fcmToken,
-    '🎯 Task Request Rejected',
-    buildNotificationMessage(task, task.client, request),
-    task.client.profileImage
-  );
+  if (
+    request.team &&
+    request.team.teamLeader &&
+    request.team.teamLeader.fcmToken
+  ) {
+    await sendNotificationToTeam(
+      request.team.teamLeader.fcmToken,
+      '🎯 Task Request Rejected',
+      buildNotificationMessage(task, task.client, request),
+      task.client.profileImage
+    );
+  }
 
   await task.save();
 

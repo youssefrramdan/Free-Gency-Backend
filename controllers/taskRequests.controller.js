@@ -22,8 +22,24 @@ const canManageTaskRequest = async (userId, taskId) => {
 // ==========================================
 // Helper to build notification message
 // ==========================================
-const buildNotificationMessage = (task, teamLeader, notification) =>
-  `📌 ${task.title}\n👥 ${teamLeader.name} has sent a request for your task\n💰 Proposed Budget: ${notification.budget} SAR\n📝 ${notification.note.substring(0, 100)}...`;
+const buildNotificationMessage = (task, sender, notification) => {
+  // For new request notifications (team sends to client)
+  if (notification.budget && notification.note) {
+    return `📌 ${task.title}\n👥 ${sender.name || 'Team'} has sent a request for your task\n💰 Proposed Budget: ${notification.budget} SAR\n📝 ${notification.note.substring(0, 100)}...`;
+  }
+
+  // For accept/reject notifications (client sends to team)
+  if (notification.status === 'accepted') {
+    return `📌 ${task.title}\n✅ Your request has been accepted by ${sender.name || 'Client'}\n🚀 You can now start working on this task!`;
+  }
+
+  if (notification.status === 'rejected') {
+    return `📌 ${task.title}\n❌ Your request has been rejected by ${sender.name || 'Client'}\n🔍 Try applying to other open tasks.`;
+  }
+
+  // Default message if none of the above conditions match
+  return `📌 ${task.title}\n👋 There's an update on your task request`;
+};
 
 // ==========================================
 // Send notification helper
@@ -147,7 +163,6 @@ const getTaskRequests = asyncHandler(async (req, res, next) => {
     data: grouped,
   });
 });
-
 // ==========================================
 // Accept Task Request
 // ==========================================
@@ -170,29 +185,27 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
 
   // Now populate needed data for notifications
   await task.populate('client', 'fcmToken profileImage');
-  await task.populate('teamRequests.team', 'name logo');
-  await task.populate(
-    'teamRequests.team.teamLeader',
-    'fcmToken name profileImage'
-  );
 
+  // Get the request before full population to access the team ID
   const request = task.teamRequests.id(requestId);
   if (!request) {
     return next(new ApiError('Request not found in task', 404));
   }
+
+  // Find and populate the team separately to ensure proper data
+  const team = await Team.findById(request.team).populate(
+    'teamLeader',
+    'fcmToken name profileImage'
+  );
 
   request.status = 'accepted';
   request.responseAt = new Date();
   request.responseBy = req.user._id;
 
   // Notify the accepted team leader
-  if (
-    request.team &&
-    request.team.teamLeader &&
-    request.team.teamLeader.fcmToken
-  ) {
+  if (team && team.teamLeader && team.teamLeader.fcmToken) {
     await sendNotificationToTeam(
-      request.team.teamLeader.fcmToken,
+      team.teamLeader.fcmToken,
       '🎯 Task Request Accepted',
       buildNotificationMessage(task, task.client, request),
       task.client.profileImage
@@ -203,31 +216,49 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
   task.assignedTeam = request.team;
   task.status = 'in-progress';
 
-  // Reject other pending requests and notify
-  task.teamRequests
-    .filter(
-      reqItem =>
-        reqItem.status === 'pending' && reqItem._id.toString() !== requestId
-    )
-    .forEach(rejectedRequest => {
-      rejectedRequest.status = 'rejected';
-      rejectedRequest.responseAt = new Date();
+  // Find all pending requests and update their status
+  const pendingRequests = task.teamRequests.filter(
+    reqItem =>
+      reqItem.status === 'pending' && reqItem._id.toString() !== requestId
+  );
+
+  // Update status in the task
+  pendingRequests.forEach(rejectedRequest => {
+    rejectedRequest.status = 'rejected';
+    rejectedRequest.responseAt = new Date();
+  });
+
+  // Save task first
+  await task.save();
+
+  // Now send notifications using Promise.all to avoid await in loop
+  const rejectionNotifications = pendingRequests.map(async rejectedRequest => {
+    try {
+      const rejectedTeam = await Team.findById(rejectedRequest.team).populate(
+        'teamLeader',
+        'fcmToken name profileImage'
+      );
 
       if (
-        rejectedRequest.team &&
-        rejectedRequest.team.teamLeader &&
-        rejectedRequest.team.teamLeader.fcmToken
+        rejectedTeam &&
+        rejectedTeam.teamLeader &&
+        rejectedTeam.teamLeader.fcmToken
       ) {
-        sendNotificationToTeam(
-          rejectedRequest.team.teamLeader.fcmToken,
+        return sendNotificationToTeam(
+          rejectedTeam.teamLeader.fcmToken,
           '🎯 Task Request Rejected',
           buildNotificationMessage(task, task.client, rejectedRequest),
           task.client.profileImage
         );
       }
-    });
+      return null;
+    } catch (err) {
+      return null;
+    }
+  });
 
-  await task.save();
+  // Wait for all notifications to be sent
+  await Promise.all(rejectionNotifications);
 
   res.status(200).json({
     status: 'success',
@@ -258,10 +289,6 @@ const rejectTaskRequest = asyncHandler(async (req, res, next) => {
 
   // Now populate data for notifications
   await task.populate('client', 'fcmToken profileImage');
-  await task.populate(
-    'teamRequests.team.teamLeader',
-    'fcmToken name profileImage'
-  );
 
   const request = task.teamRequests.id(requestId);
   if (!request) {
@@ -272,14 +299,16 @@ const rejectTaskRequest = asyncHandler(async (req, res, next) => {
   request.responseAt = new Date();
   request.responseBy = req.user._id;
 
+  // Find and populate the team separately
+  const team = await Team.findById(request.team).populate(
+    'teamLeader',
+    'fcmToken name profileImage'
+  );
+
   // Notify the team leader of rejection
-  if (
-    request.team &&
-    request.team.teamLeader &&
-    request.team.teamLeader.fcmToken
-  ) {
+  if (team && team.teamLeader && team.teamLeader.fcmToken) {
     await sendNotificationToTeam(
-      request.team.teamLeader.fcmToken,
+      team.teamLeader.fcmToken,
       '🎯 Task Request Rejected',
       buildNotificationMessage(task, task.client, request),
       task.client.profileImage

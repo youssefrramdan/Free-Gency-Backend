@@ -6,7 +6,7 @@ dotenv.config({ path: './config/config.env' });
 
 // معرف جهاز للاختبار
 const testToken =
-  'cGSjs9QfRzeJFz1xVeUasI:APA91bE9JQRfDO95U9lfPPzhpJhbkhrIAKCPQ2zkAEVYlbyond8oBvkz6wRJvB6UyZEDpEf_VBpljtZT6vKeVc7HuPPA_TQ-ESAWYOJEHIkgbNtUUjX0u8A';
+  'eWLNxDXsRwyEZmUuVDMzw4:APA91bG_Flvyx96cmRk_OmgBdtSkzVfF2bLzoDhw9cVpmUY7ojWaOSI9gEoNlhWCucSFwFSuurO0c1SeLhbIS-Z0V9UlLWA8VgP5drkSI8lPPzBpZshht3Y';
 
 async function testFirebase() {
   try {

@@ -60,14 +60,22 @@ const createTask = asyncHandler(async (req, res) => {
     'name profileImage'
   );
 
-  await NotificationService.sendTeamNotificationsByCategory(
+  // تجهيز الرسالة
+  const title = '🎯 New Task Available';
+  const body = `📌 ${task.title}
+👤 Posted by: ${taskWithClient.client.name}
+💰 Budget: ${task.budget || 'Not specified'} SAR
+${task.duration ? `⏰ Duration: ${task.duration} days` : ''}
+📝 ${task.description ? `${task.description.substring(0, 100)}...` : 'No description'}`;
+
+  // لا نستخدم await هنا لكي لا تؤخر استجابة API
+  NotificationService.sendTeamNotificationsByCategory(
     teams,
     task.category,
-    '🎯 New Task Available',
-    `📌 ${task.title}\n👤 Posted by: ${taskWithClient.client.name}\n💰 Budget: ${task.budget} SAR\n⏰ Duration: ${task.duration} days\n📝 ${task.description.substring(0, 100)}...`,
+    title,
+    body,
     taskWithClient.client.profileImage
   );
-
   res.status(201).json({
     status: 'success',
     data: task,

@@ -75,11 +75,7 @@ const createTaskRequest = asyncHandler(async (req, res, next) => {
   const proposalFiles = [];
   if (req.files && req.files.length > 0) {
     req.files.forEach(file => {
-      proposalFiles.push({
-        fileName: file.originalname,
-        fileUrl: file.path,
-        uploadedAt: new Date(),
-      });
+      proposalFiles.push(file.path);
     });
   }
 
@@ -134,9 +130,11 @@ const getTaskRequests = asyncHandler(async (req, res, next) => {
   );
 
   const grouped = { pending: [], accepted: [], rejected: [] };
-  for (const request of taskWithRequests.teamRequests) {
-    grouped[request.status]?.push(request);
-  }
+  taskWithRequests.teamRequests.forEach(request => {
+    if (grouped[request.status]) {
+      grouped[request.status].push(request);
+    }
+  });
 
   res.status(200).json({
     status: 'success',
@@ -248,7 +246,7 @@ const deleteTaskRequest = asyncHandler(async (req, res, next) => {
 
   res.status(204).json({
     status: 'success',
-    message: 'Task request deleted successfully',   
+    message: 'Task request deleted successfully',
   });
 });
 

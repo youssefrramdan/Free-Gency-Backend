@@ -127,24 +127,24 @@ const getAllMyTasks = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Get tasks based on user interests
- * @route   GET /api/v1/tasks/by-interest
+ * @desc    Get tasks based on team category
+ * @route   GET /api/v1/tasks/by-team-category
  * @access  Private
  */
-const getTasksByInterest = asyncHandler(async (req, res) => {
-  const { interests } = req.user;
+const getTasksByTeamCategory = asyncHandler(async (req, res, next) => {
+  const team = await Team.findOne({ teamLeader: req.user._id });
 
-  // Get tasks that match user's interests
+  if (!team) {
+    return next(new ApiError('Team not found', 404));
+  }
+
+  // Get tasks that match team's category
   const tasks = await Task.find({
-    category: { $in: interests },
+    category: team.category,
   })
     .populate('client', 'name email')
     .populate('category', 'name')
-    .populate({
-      path: 'service',
-      select: 'name',
-      model: 'Service',
-    });
+    .populate('service', 'name');
 
   res.status(200).json({
     status: 'success',
@@ -315,25 +315,10 @@ const deleteTaskFile = asyncHandler(async (req, res) => {
   });
 });
 
-// Send notifications to teams with matching category
-const sendTaskNotification = async (category, taskTitle) => {
-  try {
-    const teams = await Team.find().populate('members');
-    await NotificationService.sendTeamNotificationsByCategory(
-      teams,
-      category,
-      'مهمة جديدة',
-      `تم إضافة مهمة جديدة: ${taskTitle}`
-    );
-  } catch (error) {
-    console.error('Error sending notifications:', error);
-  }
-};
-
 export {
   createTask,
   getAllTasks,
-  getTasksByInterest,
+  getTasksByTeamCategory,
   getAllMyTasks,
   getSpecificTask,
   updateSpecificTask,

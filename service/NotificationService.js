@@ -1,9 +1,4 @@
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import admin from '../firebase/firebase.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 class NotificationService {
   static async sendNotification(deviceToken, title, body) {

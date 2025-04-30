@@ -7,7 +7,7 @@ import {
   deleteSpecificTask,
   addTaskFiles,
   deleteTaskFile,
-  getTasksByInterest,
+  getTasksByTeamCategory,
   getAllMyTasks,
 } from '../controllers/task.controller.js';
 import {
@@ -39,7 +39,9 @@ taskRouter
   .get(getAllTasks)
   .post(upload.array('requirment'), createTaskValidator, createTask);
 
-taskRouter.route('/interests').get(getTasksByInterest);
+taskRouter
+  .route('/category')
+  .get(allowTo('teamLeader'), getTasksByTeamCategory);
 taskRouter.route('/me').get(getAllMyTasks);
 
 taskRouter

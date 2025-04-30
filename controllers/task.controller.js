@@ -98,7 +98,6 @@ const getAllMyTasks = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     status: 'success',
-    results: tasks.length,
     data: {
       postedProjects: posted,
       projectsInProgress: inProgress,

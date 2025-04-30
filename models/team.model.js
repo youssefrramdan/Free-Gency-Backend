@@ -65,7 +65,7 @@ const teamSchema = new mongoose.Schema(
     // Client tasks the team is working on
     clientTasks: [
       {
-        project: {
+        task: {
           type: mongoose.Schema.ObjectId,
           ref: 'ClientTasks',
         },

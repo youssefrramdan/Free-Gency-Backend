@@ -98,7 +98,7 @@ const taskSchema = new mongoose.Schema(
         },
       },
     ],
-    // Project history now reflects the overall project status changes
+    // task History now reflects the overall project status changes
     taskHistory: [
       {
         status: {
@@ -126,11 +126,11 @@ taskSchema.index({ assignedTeam: 1 });
 
 // Pre-save middleware to handle request status changes
 taskSchema.pre('save', function (next) {
-  // Add project status change to projectHistory when status changes
+  // Add task status change to taskHistory when status changes
   if (this.isModified('status')) {
-    this.projectHistory.push({
+    this.taskHistory.push({
       status: this.status,
-      note: `Project status changed to ${this.status}`,
+      note: `task status changed to ${this.status}`,
       changedAt: Date.now(),
     });
   }

@@ -173,14 +173,6 @@ const getSpecificTask = asyncHandler(async (req, res, next) => {
     return next(new ApiError('Task not found', 404));
   }
 
-  // Check if user is authorized (either admin or the client who created the task)
-  if (
-    req.user.role !== 'admin' &&
-    task.client.toString() !== req.user._id.toString()
-  ) {
-    return next(new ApiError('Not authorized to access this task', 403));
-  }
-
   res.status(200).json({
     status: 'success',
     data: task,

@@ -1,8 +1,14 @@
 import admin from 'firebase-admin';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// تحميل إعدادات البيئة من .env
-dotenv.config({ path: '../config/config.env' });
+// الحصول على المسار الحالي للملف
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// تحميل إعدادات البيئة من .env باستخدام المسار المطلق
+dotenv.config({ path: path.join(__dirname, '../config/config.env') });
 
 // إنشاء Firebase service account object باستخدام القيم من .env
 const serviceAccount = {

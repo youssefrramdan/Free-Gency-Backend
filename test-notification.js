@@ -42,7 +42,11 @@ async function testNotification() {
       const result = await NotificationService.sendNotification(
         testUser.fcmToken,
         'Test Notification from freegency-5cd19',
-        'This is a test notification from the freegency-5cd19 project. If you received this, the configuration is correct!'
+        'This is a test notification from the freegency-5cd19 project. If you received this, the configuration is correct!',
+        null,
+        'info',
+        null,
+        { userId: testUser._id }
       );
       console.log('Notification result:', result);
       console.log('Test completed successfully!');

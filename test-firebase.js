@@ -6,29 +6,28 @@ dotenv.config({ path: './config/config.env' });
 
 // معرف جهاز للاختبار
 const testToken =
-  'eWLNxDXsRwyEZmUuVDMzw4:APA91bG_Flvyx96cmRk_OmgBdtSkzVfF2bLzoDhw9cVpmUY7ojWaOSI9gEoNlhWCucSFwFSuurO0c1SeLhbIS-Z0V9UlLWA8VgP5drkSI8lPPzBpZshht3Y';
-
+  'fu9AI-C4RKmSliahEvje_m:APA91bFhDP9Pk26-_BTjTOx0uGm4tLS3qS80VYcIlTYu9lxkbnGspJEOfLlYzUGjo9osWE8P9aI40rn2z9f3oEbHPCLhuPr_gpJUSADFvOq20NJ1oqke-jk';
 async function testFirebase() {
   try {
-    console.log('بدء اختبار إشعارات Firebase...');
-    console.log(`استخدام معرف جهاز: ${testToken}`);
+    console.log(`firebase statring`);
+    console.log(`fcmToken: ${testToken}`);
 
     // إرسال إشعار اختبار
     const message = {
       notification: {
-        title: 'اختبار الإشعارات',
-        body: 'هذا اختبار للتأكد من أن إشعارات Firebase تعمل بشكل صحيح!',
+        title: 'test notification',
+        body: 'hi mohamed',
       },
       token: testToken,
     };
 
-    console.log('جاري إرسال الإشعار...');
+    console.log('sending ...');
     const response = await admin.messaging().send(message);
 
-    console.log('تم إرسال الإشعار بنجاح!');
-    console.log('نتيجة الإشعار:', response);
+    console.log('success!');
+    console.log('response :', response);
   } catch (error) {
-    console.error('حدث خطأ أثناء إرسال الإشعار:', error);
+    console.error(`error`, error);
   }
 }
 

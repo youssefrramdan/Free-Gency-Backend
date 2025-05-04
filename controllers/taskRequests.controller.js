@@ -1,3 +1,4 @@
+/* eslint-disable default-case */
 import asyncHandler from 'express-async-handler';
 import Task from '../models/task.model.js';
 import ApiError from '../utils/apiError.js';

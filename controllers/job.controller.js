@@ -71,6 +71,20 @@ const getAllJobs = asyncHandler(async (req, res) => {
   });
 });
 
+const getMyJobs = asyncHandler(async (req, res) => {
+  const jobs = await jobModel
+    .find({ createdBy: req.user._id })
+    .populate('createdBy', 'name profileImage')
+    .populate('category', 'name')
+    .sort('-createdAt');
+
+  res.status(200).json({
+    status: 'success',
+    results: jobs.length,
+    data: jobs,
+  });
+});
+
 /**
  * @desc    Get jobs by category
  * @route   GET /api/v1/jobs/category/:categoryId
@@ -95,7 +109,7 @@ const getJobsByCategory = asyncHandler(async (req, res, next) => {
  * @route   GET /api/v1/jobs/:id
  * @access  Public
  */
-const getJob = asyncHandler(async (req, res, next) => {
+const getJobById = asyncHandler(async (req, res, next) => {
   const job = await jobModel
     .findById(req.params.id)
     .populate('createdBy', 'name profileImage')
@@ -168,7 +182,8 @@ export {
   createJob,
   getAllJobs,
   getJobsByCategory,
-  getJob,
+  getJobById,
+  getMyJobs,
   updateJob,
   deleteJob,
 };

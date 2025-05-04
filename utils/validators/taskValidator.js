@@ -38,12 +38,6 @@ const createTaskValidator = [
       }
       return true;
     }),
-  check('requiredSkills')
-    .optional()
-    .isArray()
-    .withMessage('Required skills must be an array')
-    .custom(skills => skills.every(skill => typeof skill === 'string'))
-    .withMessage('Each skill must be a string'),
   check('deadline')
     .optional()
     .isISO8601()

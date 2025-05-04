@@ -65,8 +65,8 @@ const createTask = asyncHandler(async (req, res) => {
   );
 
   // تجهيز الرسالة
-  const title = '🎯 New Task Available';
-  const body = `📌 ${task.title}👤 Posted by: ${taskWithClient.client.name}💰 Budget: ${task.budget || 'Not specified'} SAR${task.duration ? `⏰ Duration: ${task.duration} days` : ''}📝 ${task.description ? `${task.description.substring(0, 100)}...` : ''}`;
+  const title = `${task.title}`;
+  const body = `${task.description}`;
 
   // Send notifications to teams with matching category
   await NotificationService.sendTeamNotificationsByCategory(

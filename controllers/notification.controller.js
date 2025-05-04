@@ -27,34 +27,33 @@ export const createNotification = asyncHandler(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    Get user notifications
- * @route   GET /api/v1/notifications
- * @access  Private
- * @query   {string} [type] - Filter by notification type
- * @query   {boolean} [isRead] - Filter by read status
- * @query   {string} [sort] - Sort by fields (e.g., "-createdAt")
- * @query   {boolean} [active] - Show only active notifications (not expired)
- */
 export const getMyNotifications = asyncHandler(async (req, res, next) => {
-  const { isRead, sort, active } = req.query;
+  const { filterBy, sort } = req.query;
 
+  // Base query always filters by current user
   const query = { userId: req.user._id };
 
-  // Handle isRead filter
-  if (isRead !== undefined) {
-    query.isRead = isRead === 'true';
-  }
+  // Apply filters based on filterBy parameter
+  switch (filterBy) {
+    case 'read':
+      query.isRead = true;
+      break;
 
-  // Handle active filter
-  if (active !== undefined) {
-    if (active === 'true') {
+    case 'unRead':
+      query.isRead = false;
+      break;
+
+    case 'active':
       query.expiresAt = { $gt: new Date() };
-    } else if (active === 'false') {
-      query.expiresAt = { $lte: new Date() };
-    }
+      break;
+
+    case 'all':
+    default:
+      // No additional filters needed for 'all'
+      break;
   }
 
+  // Create and configure the mongoose query
   let mongooseQuery = UserNotification.find(query);
 
   // Handle sorting
@@ -69,6 +68,7 @@ export const getMyNotifications = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
+    results: notifications.length,
     data: notifications,
   });
 });

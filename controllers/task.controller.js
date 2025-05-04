@@ -54,7 +54,7 @@ const createTask = asyncHandler(async (req, res) => {
   const task = await Task.create(req.body);
 
   // Send notifications to teams with matching category
-  const teams = await Team.find().populate('teamLeader', 'fcmToken');
+  const teams = await Team.find().populate('teamLeader', 'fcmToken name');
   const taskWithClient = await Task.findById(task._id).populate(
     'client',
     'name profileImage'
@@ -68,14 +68,23 @@ const createTask = asyncHandler(async (req, res) => {
 ${task.duration ? `⏰ Duration: ${task.duration} days` : ''}
 📝 ${task.description ? `${task.description.substring(0, 100)}...` : 'No description'}`;
 
-  // لا نستخدم await هنا لكي لا تؤخر استجابة API
-  NotificationService.sendTeamNotificationsByCategory(
+  // Send notifications to teams with matching category
+  await NotificationService.sendTeamNotificationsByCategory(
     teams,
     task.category,
     title,
     body,
-    taskWithClient.client.profileImage
+    taskWithClient.client.profileImage,
+    'task-posted',
+    `/tasks/${task._id}`,
+    {
+      taskId: task._id,
+      category: task.category,
+      budget: task.budget,
+      duration: task.duration,
+    }
   );
+
   res.status(201).json({
     status: 'success',
     data: task,

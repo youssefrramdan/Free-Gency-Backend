@@ -37,20 +37,27 @@ export const createNotification = asyncHandler(async (req, res, next) => {
  * @query   {boolean} [active] - Show only active notifications (not expired)
  */
 export const getMyNotifications = asyncHandler(async (req, res, next) => {
-  const { type, isRead, unRead, sort, active } = req.query;
+  const { isRead, sort, active } = req.query;
 
   const query = { userId: req.user._id };
-  if (type) query.type = type;
-  if (isRead !== undefined) query.isRead = isRead === 'true';
-  if (active === 'true') {
-    query.expiresAt = { $gt: new Date() };
-  }
-  if (unRead) {
+
+  // Handle isRead filter
+  if (isRead !== undefined) {
     query.isRead = isRead === 'true';
+  }
+
+  // Handle active filter
+  if (active !== undefined) {
+    if (active === 'true') {
+      query.expiresAt = { $gt: new Date() };
+    } else if (active === 'false') {
+      query.expiresAt = { $lte: new Date() };
+    }
   }
 
   let mongooseQuery = UserNotification.find(query);
 
+  // Handle sorting
   if (sort) {
     const sortBy = sort.split(',').join(' ');
     mongooseQuery = mongooseQuery.sort(sortBy);

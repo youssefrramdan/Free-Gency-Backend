@@ -53,8 +53,12 @@ const createTask = asyncHandler(async (req, res) => {
   // Create the task
   const task = await Task.create(req.body);
 
-  // Send notifications to teams with matching category
-  const teams = await Team.find().populate('teamLeader', 'fcmToken name');
+  // Get teams with matching category and their team leaders
+  const teams = await Team.find({ category: task.category }).populate(
+    'teamLeader',
+    'fcmToken name createdTeam'
+  );
+
   const taskWithClient = await Task.findById(task._id).populate(
     'client',
     'name profileImage'
@@ -62,11 +66,7 @@ const createTask = asyncHandler(async (req, res) => {
 
   // تجهيز الرسالة
   const title = '🎯 New Task Available';
-  const body = `📌 ${task.title}
-👤 Posted by: ${taskWithClient.client.name}
-💰 Budget: ${task.budget || 'Not specified'} SAR
-${task.duration ? `⏰ Duration: ${task.duration} days` : ''}
-📝 ${task.description ? `${task.description.substring(0, 100)}...` : 'No description'}`;
+  const body = `📌 ${task.title}👤 Posted by: ${taskWithClient.client.name}💰 Budget: ${task.budget || 'Not specified'} SAR${task.duration ? `⏰ Duration: ${task.duration} days` : ''}📝 ${task.description ? `${task.description.substring(0, 100)}...` : ''}`;
 
   // Send notifications to teams with matching category
   await NotificationService.sendTeamNotificationsByCategory(

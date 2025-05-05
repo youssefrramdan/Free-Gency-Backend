@@ -7,10 +7,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// تحميل إعدادات البيئة من .env باستخدام المسار المطلق
 dotenv.config({ path: path.join(__dirname, '../config/config.env') });
 
-// إنشاء Firebase service account object باستخدام القيم من .env
 const serviceAccount = {
   type: 'service_account',
   project_id: process.env.FIREBASE_PROJECT_ID,

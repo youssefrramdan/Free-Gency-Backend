@@ -18,6 +18,7 @@ const userNotificationSchema = new mongoose.Schema(
     imageUrl: String,
     type: {
       type: String,
+      enum:["Task-Posted" , "Accept-Request"],
       default: 'info',
     },
     actionUrl: String,

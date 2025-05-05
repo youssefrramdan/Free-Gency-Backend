@@ -12,39 +12,34 @@ class NotificationService {
     actionUrl = null,
     data = {}
   ) {
-    try {
-      if (!deviceToken) return null;
-      if (!data.userId) throw new Error('userId is required');
+    if (!deviceToken) return null;
+    if (!data.userId) throw new Error('userId is required');
 
-      // Save notification to database
-      const notification = await UserNotification.create({
-        userId: data.userId,
-        title,
-        body,
-        imageUrl,
-        type,
-        actionUrl,
-        data,
-        isRead: false,
-        sentAt: new Date(),
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-      });
+    // Save notification to database
+    const notification = await UserNotification.create({
+      userId: data.userId,
+      title,
+      body,
+      imageUrl,
+      type,
+      actionUrl,
+      data,
+      isRead: false,
+      sentAt: new Date(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+    });
 
-      // Prepare Firebase message
-      const message = {
-        notification: { title, body },
-        token: deviceToken,
-      };
+    // Prepare Firebase message
+    const message = {
+      notification: { title, body },
+      token: deviceToken,
+    };
 
-      if (imageUrl) message.notification.imageUrl = imageUrl;
+    if (imageUrl) message.notification.imageUrl = imageUrl;
 
-      // Send push notification
-      const response = await admin.messaging().send(message);
-      return { ...response, notificationId: notification._id };
-    } catch (error) {
-      console.error('Error sending notification:', error);
-      throw error;
-    }
+    // Send push notification
+    const response = await admin.messaging().send(message);
+    return { ...response, notificationId: notification._id };
   }
 
   static async sendMultipleNotification(
@@ -56,48 +51,39 @@ class NotificationService {
     actionUrl = null,
     data = {}
   ) {
-    try {
-      // Save notifications to database
-      const notifications = await Promise.all(
-        deviceTokens.map((token, index) => {
-          if (!data.userIds || !data.userIds[index]) {
-            console.warn(`No userId found for index ${index}`);
-            return null;
-          }
-          return UserNotification.create({
-            userId: data.userIds[index],
-            title,
-            body,
-            imageUrl,
-            type,
-            actionUrl,
-            data,
-            isRead: false,
-            sentAt: new Date(),
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          });
-        })
-      );
+    const notifications = await Promise.all(
+      deviceTokens.map((token, index) => {
+        if (!data.userIds || !data.userIds[index]) {
+          console.warn(`No userId found for index ${index}`);
+          return null;
+        }
+        return UserNotification.create({
+          userId: data.userIds[index],
+          title,
+          body,
+          imageUrl,
+          type,
+          actionUrl,
+          data,
+          isRead: false,
+          sentAt: new Date(),
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        });
+      })
+    );
 
-      // Filter out null notifications
-      const validNotifications = notifications.filter(n => n !== null);
+    const validNotifications = notifications.filter(n => n !== null);
 
-      // Prepare Firebase messages
-      const messages = deviceTokens.map(token => ({
-        notification: { title, body, imageUrl },
-        token,
-      }));
+    const messages = deviceTokens.map(token => ({
+      notification: { title, body, imageUrl },
+      token,
+    }));
 
-      // Send push notifications
-      const response = await admin.messaging().sendEach(messages);
-      return {
-        ...response,
-        notificationIds: validNotifications.map(n => n._id),
-      };
-    } catch (error) {
-      console.error('Error sending multiple notifications:', error);
-      throw error;
-    }
+    const response = await admin.messaging().sendEachForMulticast(messages);
+    return {
+      ...response,
+      notificationIds: validNotifications.map(n => n._id),
+    };
   }
 
   static async sendTeamNotificationsByCategory(
@@ -110,46 +96,41 @@ class NotificationService {
     actionUrl = null,
     data = {}
   ) {
-    try {
-      if (!Array.isArray(teams)) return null;
+    if (!Array.isArray(teams)) return null;
 
-      // Get team leaders with FCM tokens and matching category
-      const targetTokens = teams
-        .filter(team => team.category.toString() === category.toString())
-        .map(team => team.teamLeader)
-        .filter(leader => leader && leader.fcmToken && leader.createdTeam)
-        .map(leader => ({
-          token: leader.fcmToken,
-          userId: leader._id,
-        }));
+    // Get team leaders with FCM tokens and matching category
+    const targetTokens = teams
+      .filter(team => team.category.toString() === category.toString())
+      .map(team => team.teamLeader)
+      .filter(leader => leader && leader.fcmToken && leader.createdTeam)
+      .map(leader => ({
+        token: leader.fcmToken,
+        userId: leader._id,
+      }));
 
-      if (targetTokens.length === 0) {
-        return {
-          successCount: 0,
-          failureCount: 0,
-          message: 'No matching teams found',
-        };
-      }
-
-      // Send push notifications and create notifications in database
-      const response = await this.sendMultipleNotification(
-        targetTokens.map(t => t.token),
-        title,
-        body,
-        imageUrl,
-        type,
-        actionUrl,
-        {
-          ...data,
-          userIds: targetTokens.map(t => t.userId),
-        }
-      );
-
-      return response;
-    } catch (error) {
-      console.error('Error sending team notifications:', error);
-      throw error;
+    if (targetTokens.length === 0) {
+      return {
+        successCount: 0,
+        failureCount: 0,
+        message: 'No matching teams found',
+      };
     }
+
+    // Send push notifications and create notifications in database
+    const response = await this.sendMultipleNotification(
+      targetTokens.map(t => t.token),
+      title,
+      body,
+      imageUrl,
+      type,
+      actionUrl,
+      {
+        ...data,
+        userIds: targetTokens.map(t => t.userId),
+      }
+    );
+
+    return response;
   }
 
   static async sendJobNotifications(
@@ -161,40 +142,35 @@ class NotificationService {
     actionUrl = null,
     data = {}
   ) {
-    try {
-      // Get all users who have this category in their interests array
-      const users = await User.find({
-        interests: { $in: [category] }, // Match if category exists in interests array
-        fcmToken: { $exists: true, $ne: null },
-      }).select('fcmToken _id');
+    // Get all users who have this category in their interests array
+    const users = await User.find({
+      interests: { $in: [category] }, // Match if category exists in interests array
+      fcmToken: { $exists: true, $ne: null },
+    }).select('fcmToken _id');
 
-      if (users.length === 0) {
-        return {
-          successCount: 0,
-          failureCount: 0,
-          message: 'No matching users found',
-        };
-      }
-
-      // Send notifications to all matching users
-      const response = await this.sendMultipleNotification(
-        users.map(user => user.fcmToken),
-        title,
-        body,
-        imageUrl,
-        type,
-        actionUrl,
-        {
-          ...data,
-          userIds: users.map(user => user._id),
-        }
-      );
-
-      return response;
-    } catch (error) {
-      console.error('Error sending job notifications:', error);
-      throw error;
+    if (users.length === 0) {
+      return {
+        successCount: 0,
+        failureCount: 0,
+        message: 'No matching users found',
+      };
     }
+
+    // Send notifications to all matching users
+    const response = await this.sendMultipleNotification(
+      users.map(user => user.fcmToken),
+      title,
+      body,
+      imageUrl,
+      type,
+      actionUrl,
+      {
+        ...data,
+        userIds: users.map(user => user._id),
+      }
+    );
+
+    return response;
   }
 }
 

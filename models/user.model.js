@@ -75,7 +75,7 @@ const userSchema = new mongoose.Schema(
     fcmToken: {
       type: String,
       default:
-        'cGSjs9QfRzeJFz1xVeUasI:APA91bE9JQRfDO95U9lfPPzhpJhbkhrIAKCPQ2zkAEVYlbyond8oBvkz6wRJvB6UyZEDpEf_VBpljtZT6vKeVc7HuPPA_TQ-ESAWYOJEHIkgbNtUUjX0u8A',
+        'cpxejH2vK1RwXoumhrtwKG:APA91bExzMeZD9sXLX4rF3FDnyBNsINTzDAWqw_zXloyVw6Fiz9mUVVfBtPp2-moLnVnZnW7rQ_xId3Pdsc0JCiG92i6aWkJpLzPQZtxwd69B4s3Il6ZLbQ',
     },
   },
   {

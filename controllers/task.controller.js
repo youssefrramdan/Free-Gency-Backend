@@ -71,7 +71,7 @@ const createTask = asyncHandler(async (req, res) => {
     title,
     body,
     taskWithClient.client.profileImage,
-    'task-posted',
+    'taskPosted',
     `/tasks/${task._id}`,
     task._id.toString()
   );

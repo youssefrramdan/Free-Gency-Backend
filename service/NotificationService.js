@@ -10,7 +10,7 @@ class NotificationService {
     imageUrl = null,
     type = 'info',
     actionUrl = null,
-    data = {}
+    data = ''
   ) {
     if (!deviceToken) return null;
     if (!data.userId) throw new Error('userId is required');
@@ -23,7 +23,7 @@ class NotificationService {
       imageUrl,
       type,
       actionUrl,
-      data,
+      data: typeof data === 'object' ? data.data : data,
       isRead: false,
       sentAt: new Date(),
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
@@ -49,7 +49,7 @@ class NotificationService {
     imageUrl,
     type = 'info',
     actionUrl = null,
-    data = {}
+    data = ''
   ) {
     const notifications = await Promise.all(
       deviceTokens.map((token, index) => {
@@ -64,7 +64,7 @@ class NotificationService {
           imageUrl,
           type,
           actionUrl,
-          data,
+          data: typeof data === 'object' ? data.data : data,
           isRead: false,
           sentAt: new Date(),
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
@@ -94,7 +94,7 @@ class NotificationService {
     imageUrl,
     type = 'info',
     actionUrl = null,
-    data = {}
+    data = ''
   ) {
     if (!Array.isArray(teams)) return null;
 
@@ -125,7 +125,7 @@ class NotificationService {
       type,
       actionUrl,
       {
-        ...data,
+        data: data,
         userIds: targetTokens.map(t => t.userId),
       }
     );
@@ -140,7 +140,7 @@ class NotificationService {
     imageUrl,
     type = 'info',
     actionUrl = null,
-    data = {}
+    data = ''
   ) {
     // Get all users who have this category in their interests array
     const users = await User.find({
@@ -165,7 +165,7 @@ class NotificationService {
       type,
       actionUrl,
       {
-        ...data,
+        data: data,
         userIds: users.map(user => user._id),
       }
     );

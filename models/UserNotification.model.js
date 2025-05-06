@@ -18,13 +18,13 @@ const userNotificationSchema = new mongoose.Schema(
     imageUrl: String,
     type: {
       type: String,
-    //   enum:["Task-Posted" , "Accept-Request"],
+      //   enum:["Task-Posted" , "Accept-Request"],
       default: 'info',
     },
     actionUrl: String,
     data: {
-      type: mongoose.Schema.Types.Mixed,
-      default: {},
+      type: String,
+      default: '',
     },
     isRead: {
       type: Boolean,
@@ -44,4 +44,8 @@ const userNotificationSchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.model('UserNotification', userNotificationSchema);
+const UserNotification = mongoose.model(
+  'UserNotification',
+  userNotificationSchema
+);
+export default UserNotification;

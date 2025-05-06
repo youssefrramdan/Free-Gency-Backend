@@ -37,7 +37,12 @@ taskRouter.use(protectedRoutes);
 taskRouter
   .route('/')
   .get(getAllTasks)
-  .post(upload.array('requirment'), createTaskValidator, createTask);
+  .post(
+    upload.single('requirment'),
+    allowTo('client'),
+    createTaskValidator,
+    createTask
+  );
 
 taskRouter
   .route('/category')
@@ -57,6 +62,7 @@ taskRouter
 
 taskRouter.route('/:taskId/task-files/:fileId').delete(deleteTaskFile);
 
+taskRouter.use(allowTo('client'));
 // Task Requests Routes
 taskRouter
   .route('/:taskId/requests')

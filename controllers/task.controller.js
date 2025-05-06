@@ -39,15 +39,11 @@ const createTask = asyncHandler(async (req, res) => {
   // Add the client ID to the project
   req.body.client = req.user._id;
 
-  const requirment = [];
-  if (req.files && req.files.length > 0) {
-    req.files.forEach(file => {
-      requirment.push({
-        fileName: file.originalname,
-        fileUrl: file.path,
-      });
-    });
-    req.body.requirment = requirment;
+  if (req.file) {
+    req.body.requirment = {
+      fileName: req.file.originalname,
+      fileUrl: req.file.path,
+    };
   }
 
   // Create the task
@@ -77,12 +73,7 @@ const createTask = asyncHandler(async (req, res) => {
     taskWithClient.client.profileImage,
     'task-posted',
     `/tasks/${task._id}`,
-    {
-      taskId: task._id,
-      category: task.category,
-      budget: task.budget,
-      duration: task.duration,
-    }
+    task._id.toString()
   );
 
   res.status(201).json({

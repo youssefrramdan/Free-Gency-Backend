@@ -79,7 +79,7 @@ class NotificationService {
       token,
     }));
 
-    const response = await admin.messaging().sendEachForMulticast(messages);
+    const response = await admin.messaging().sendEach(messages);
     return {
       ...response,
       notificationIds: validNotifications.map(n => n._id),

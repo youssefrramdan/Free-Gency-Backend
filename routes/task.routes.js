@@ -62,12 +62,13 @@ taskRouter
 
 taskRouter.route('/:taskId/task-files/:fileId').delete(deleteTaskFile);
 
-taskRouter.use(allowTo('client'));
 // Task Requests Routes
 taskRouter
   .route('/:taskId/requests')
   .get(getTaskRequests)
   .post(uploadRequestImage.array('proposal'), createTaskRequest);
+
+taskRouter.use(allowTo('client'));
 
 taskRouter.route('/requests/:requestId/accept').patch(acceptTaskRequest);
 taskRouter.route('/requests/:requestId/reject').patch(rejectTaskRequest);

@@ -88,7 +88,7 @@ const createTask = asyncHandler(async (req, res) => {
 const getAllTasks = asyncHandler(async (req, res) => {
   // Get all tasks
   const tasks = await Task.find()
-    .populate('client', 'name email')
+    .populate('client', 'name profileImage')
     .populate('category', 'name')
     .populate({
       path: 'service',
@@ -166,8 +166,8 @@ const getTasksByTeamCategory = asyncHandler(async (req, res, next) => {
  */
 const getSpecificTask = asyncHandler(async (req, res, next) => {
   const task = await Task.findById(req.params.id)
-    .populate('client', 'name email')
-    .populate('category', 'name')
+  .populate('client', 'name profileImage')
+  .populate('category', 'name')
     .populate({
       path: 'service',
       select: 'name',

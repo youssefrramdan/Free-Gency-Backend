@@ -40,10 +40,8 @@ const createTask = asyncHandler(async (req, res) => {
   req.body.client = req.user._id;
 
   if (req.file) {
-    req.body.requirment = {
-      fileName: req.file.originalname,
-      fileUrl: req.file.path,
-    };
+    req.body.fileName = req.file.originalname;
+    req.body.fileUrl = req.file.path;
   }
 
   // Create the task

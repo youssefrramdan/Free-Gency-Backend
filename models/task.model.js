@@ -82,10 +82,8 @@ const taskSchema = new mongoose.Schema(
       },
     ],
 
-    requirment: {
-      fileName: String,
-      fileUrl: String,
-    },
+    fileName: String,
+    fileUrl: String,
     taskFiles: [
       {
         fileName: String,

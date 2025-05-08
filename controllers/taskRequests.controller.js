@@ -41,40 +41,6 @@ const buildNotificationMessage = (task, sender, notification) => {
 };
 
 // ==========================================
-// Send notification helper
-// ==========================================
-const sendNotificationToTeam = async (
-  token,
-  title,
-  message,
-  image,
-  userId,
-  type = 'request',
-  actionUrl = null,
-  data = {}
-) => {
-  if (!token) return;
-
-  try {
-    await NotificationService.sendNotification(
-      token,
-      title,
-      message,
-      image,
-      type,
-      actionUrl,
-      {
-        ...data,
-        userId: userId.toString(),
-      }
-    );
-  } catch (error) {
-    console.error('Error sending notification:', error);
-    // Don't fail the operation if notification fails
-  }
-};
-
-// ==========================================
 // Create Task Request
 // ==========================================
 const createTaskRequest = asyncHandler(async (req, res, next) => {
@@ -141,7 +107,7 @@ const createTaskRequest = asyncHandler(async (req, res, next) => {
   );
 
   // Send notification to client
-  await sendNotificationToTeam(
+  await NotificationService.sendNotificationToTeam(
     task.client.fcmToken,
     task.title,
     buildNotificationMessage(task, team.teamLeader, {
@@ -242,7 +208,7 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
   // Send notifications
   await Promise.all([
     // Send acceptance notification to the accepted team
-    sendNotificationToTeam(
+    NotificationService.sendNotificationToTeam(
       team.teamLeader.fcmToken,
       'Task Request Accepted',
       buildNotificationMessage(task, task.client, request),
@@ -257,7 +223,7 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
         teamName: team.name,
         budget: request.budget,
         status: 'accepted',
-        data: task.teamRequests[task.teamRequests.length - 1]._id,
+        data: task._id,
       }
     ),
     // Send rejection notifications to other teams
@@ -267,7 +233,7 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
         'fcmToken name profileImage'
       );
 
-      await sendNotificationToTeam(
+      await NotificationService.sendNotificationToTeam(
         rejectedTeam.teamLeader.fcmToken,
         'Task Request Rejected',
         buildNotificationMessage(task, task.client, rejectedRequest),
@@ -282,7 +248,7 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
           teamName: rejectedTeam.name,
           budget: rejectedRequest.budget,
           status: 'rejected',
-          data: task.teamRequests[task.teamRequests.length - 1]._id,
+          data: task._id,
         }
       );
     }),
@@ -324,7 +290,7 @@ const rejectTaskRequest = asyncHandler(async (req, res, next) => {
 
   await task.save();
 
-  await sendNotificationToTeam(
+  await NotificationService.sendNotificationToTeam(
     team.teamLeader.fcmToken,
     'Task Request Rejected',
     buildNotificationMessage(task, task.client, request),
@@ -339,6 +305,7 @@ const rejectTaskRequest = asyncHandler(async (req, res, next) => {
       teamName: team.name,
       budget: request.budget,
       status: 'rejected',
+      data: task._id,
     }
   );
 

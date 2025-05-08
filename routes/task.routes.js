@@ -67,7 +67,11 @@ taskRouter.route('/:taskId/task-files/:fileId').delete(deleteTaskFile);
 taskRouter
   .route('/:taskId/requests')
   .get(getTaskRequests)
-  .post(uploadRequestImage.array('proposal'), createTaskRequest);
+  .post(
+    uploadRequestImage.array('proposal'),
+    allowTo('teamLeader'),
+    createTaskRequest
+  );
 
 taskRouter.route('/requests/:requestId').get(getSpecificTaskRequest);
 

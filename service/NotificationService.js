@@ -132,6 +132,37 @@ class NotificationService {
 
     return response;
   }
+  
+  static async sendNotificationToTeam  (
+    token,
+    title,
+    message,
+    image,
+    userId,
+    type = 'request',
+    actionUrl = null,
+    data = {}
+  )  {
+    if (!token) return;
+
+    try {
+      await NotificationService.sendNotification(
+        token,
+        title,
+        message,
+        image,
+        type,
+        actionUrl,
+        {
+          ...data,
+          userId: userId.toString(),
+        }
+      );
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      // Don't fail the operation if notification fails
+    }
+  }
 
   static async sendJobNotifications(
     category,

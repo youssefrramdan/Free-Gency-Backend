@@ -56,7 +56,12 @@ const taskSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
-        proposal: [String],
+        proposal: [
+          {
+            fileName: String,
+            fileUrl: String,
+          },
+        ],
         budget: {
           type: Number,
         },

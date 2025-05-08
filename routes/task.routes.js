@@ -16,6 +16,7 @@ import {
   acceptTaskRequest,
   rejectTaskRequest,
   deleteTaskRequest,
+  getSpecificTaskRequest,
 } from '../controllers/taskRequests.controller.js';
 import { protectedRoutes, allowTo } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
@@ -67,6 +68,8 @@ taskRouter
   .route('/:taskId/requests')
   .get(getTaskRequests)
   .post(uploadRequestImage.array('proposal'), createTaskRequest);
+
+taskRouter.route('/requests/:requestId').get(getSpecificTaskRequest);
 
 taskRouter.use(allowTo('client'));
 

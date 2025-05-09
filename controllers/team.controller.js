@@ -491,7 +491,7 @@ const getTopRatedTeams = asyncHandler(async (req, res) => {
   const teams = await Team.find({
     averageRating: { $gt: 0 }, // Only teams with ratings
   })
-    .populate('team', 'name logo')
+    .select('name logo')
     .sort('-averageRating')
     .limit(10);
 

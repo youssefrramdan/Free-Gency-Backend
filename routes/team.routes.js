@@ -15,6 +15,7 @@ import {
   removeTeamMember,
   getTeamMembers,
   getTeamStatistics,
+  getTopRatedTeams,
 } from '../controllers/team.controller.js';
 import { protectedRoutes, allowTo } from '../controllers/auth.controller.js';
 import {
@@ -40,6 +41,7 @@ import ProjectsRouter from './projects.routes.js';
 const teamRouter = express.Router();
 
 teamRouter.route('/').get(getAllTeams);
+teamRouter.route('/top-rated').get(getTopRatedTeams);
 teamRouter.route('/').post(protectedRoutes, createTeamValidator, createTeam);
 
 teamRouter.route('/join').post(protectedRoutes, CreaterequestToJoinTeam);

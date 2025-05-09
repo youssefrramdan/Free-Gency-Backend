@@ -483,6 +483,25 @@ const deleteTeam = asyncHandler(async (req, res, next) => {
   });
 });
 
+// ==========================================
+// Get Top Rated Teams
+// ==========================================
+const getTopRatedTeams = asyncHandler(async (req, res) => {
+
+  const teams = await Team.find({
+    averageRating: { $gt: 0 }, // Only teams with ratings
+  })
+    .populate('team', 'name logo')
+    .sort('-averageRating')
+    .limit(10);
+
+  res.status(200).json({
+    status: 'success',
+    results: teams.length,
+    data: teams,
+  });
+});
+
 export {
   createTeam,
   getAllTeams,
@@ -499,4 +518,5 @@ export {
   removeTeamMember,
   getTeamMembers,
   getTeamStatistics,
+  getTopRatedTeams,
 };

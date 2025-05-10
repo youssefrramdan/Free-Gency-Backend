@@ -33,25 +33,25 @@ export const isAuthorized = (
  * @middleware
  */
 const createFilterObject = (req, res, next) => {
-    const filterObject = {};
+  const filterObject = {};
+  // If teamId is present, filter by team
+  if (req.params.teamId) {
+    filterObject.team = req.params.teamId;
+  }
 
-    // If teamId is present, filter by team
-    if (req.params.teamId) {
-      filterObject.team = req.params.teamId;
-    }
+  // If categoryId is present, filter by category
+  if (req.params.categoryId) {
+    filterObject.category = req.params.categoryId;
+  }
 
-    // If categoryId is present, filter by category
-    if (req.params.categoryId) {
-      filterObject.category = req.params.categoryId;
-    }
-    // If serviceId is present, filter by category
-    if (req.params.serviceId) {
-      filterObject.service = req.params.serviceId;
-    }
+  // If serviceId is present, filter by service
+  if (req.params.serviceId) {
+    filterObject.service = req.params.serviceId;
+  }
 
-    req.filterObject = filterObject;
-    next();
-  };
+  req.filterObject = filterObject;
+  next();
+};
 
 // ==========================================
 // Project Creation
@@ -190,6 +190,35 @@ const getMyTeamProjects = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Get projects based on user interests
+ * @route   GET /api/v1/projects/by-interests
+ * @access  Private/Authenticated
+ */
+const getProjectsByInterests = asyncHandler(async (req, res, next) => {
+  if (!req.user.interests || req.user.interests.length === 0) {
+    return res.status(200).json({
+      status: 'success',
+      results: 0,
+      data: [],
+      message: 'No interests found in your profile',
+    });
+  }
+
+  const projects = await Projects.find({
+    category: { $in: req.user.interests },
+  })
+    .populate('team', 'name logo')
+    .populate('category', 'name')
+    .sort('-createdAt');
+
+  res.status(200).json({
+    status: 'success',
+    results: projects.length,
+    data: projects,
+  });
+});
+
 // ==========================================
 // Project Update & Delete
 // ==========================================
@@ -262,7 +291,6 @@ const deleteSpecificProject = asyncHandler(async (req, res, next) => {
   });
 });
 
-
 export {
   createProject,
   getAllProjects,
@@ -272,4 +300,5 @@ export {
   deleteSpecificProject,
   getSpecificProject,
   createFilterObject,
+  getProjectsByInterests,
 };

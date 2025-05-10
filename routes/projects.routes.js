@@ -8,6 +8,7 @@ import {
   deleteSpecificProject,
   getSpecificProject,
   createFilterObject,
+  getProjectsByInterests,
 } from '../controllers/projects.controller.js';
 import { protectedRoutes, allowTo } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
@@ -37,5 +38,8 @@ projectsRouter
   .route('/:projectId')
   .patch(allowTo('teamLeader'), updateSpecificProject)
   .delete(allowTo('teamLeader'), deleteSpecificProject);
+
+// Add this route before the other routes
+projectsRouter.get('/by-interests', getProjectsByInterests);
 
 export default projectsRouter;

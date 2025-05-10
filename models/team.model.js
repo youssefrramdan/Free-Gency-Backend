@@ -7,6 +7,11 @@ const teamSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Team must have a leader'],
     },
+    logo: {
+      type: String,
+      default:
+        'https://img.freepik.com/free-photo/rag-dolls-opposite-red-word-team-work_1156-194.jpg?semt=ais_hybrid&w=740',
+    },
     name: {
       type: String,
       trim: true,
@@ -112,12 +117,6 @@ const teamSchema = new mongoose.Schema(
       phone: String,
       website: String,
     },
-    logo: {
-      type: String,
-      default:
-        'https://img.freepik.com/free-photo/rag-dolls-opposite-red-word-team-work_1156-194.jpg?semt=ais_hybrid&w=740',
-    },
-
     foundedAt: {
       type: Date,
       default: Date.now,

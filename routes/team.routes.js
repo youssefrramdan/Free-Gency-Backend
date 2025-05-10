@@ -7,6 +7,7 @@ import {
   getMyTeams,
   deleteMyTeam,
   updateMyTeam,
+  uploadTeamImage,
   addLastedProject,
   updateLastedProject,
   deleteLastedProject,
@@ -37,8 +38,10 @@ import {
 } from '../controllers/joinRequests.controller.js';
 import validateJoinRequest from '../middlewares/validateJoinRequest.js';
 import ProjectsRouter from './projects.routes.js';
+import createUploader from '../middlewares/cloudnairyMiddleware.js';
 
 const teamRouter = express.Router();
+const upload = createUploader('logos');
 
 teamRouter.route('/').get(getAllTeams);
 teamRouter.route('/top-rated').get(getTopRatedTeams);
@@ -67,6 +70,10 @@ teamRouter
   .route('/my-team')
   .put(protectedRoutes, updateMyTeamValidator, updateMyTeam)
   .delete(protectedRoutes, deleteMyTeam);
+
+teamRouter
+  .route('/my-team/logo')
+  .patch(protectedRoutes, upload.single('logo'), uploadTeamImage);
 
 teamRouter.route('/my-team/members').get(protectedRoutes, getTeamMembers);
 

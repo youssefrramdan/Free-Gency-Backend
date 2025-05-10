@@ -116,6 +116,22 @@ const updateMyTeam = asyncHandler(async (req, res, next) => {
   });
 });
 
+const uploadTeamImage = asyncHandler(async (req, res, next) => {
+  if (!req.file) {
+    return next(new ApiError('please upload logo', 404));
+  }
+  req.body.logo = req.file.path;
+  const team = await Team.findByIdAndUpdate(
+    req.user._id,
+    { logo: req.body.logo },
+    { new: true, runValidators: true }
+  );
+  res.status(200).json({
+    message: 'success',
+    data: team,
+  });
+});
+
 /**
  * @desc    Delete logged in user's team
  * @route   DELETE /api/v1/teams/my-team
@@ -487,7 +503,6 @@ const deleteTeam = asyncHandler(async (req, res, next) => {
 // Get Top Rated Teams
 // ==========================================
 const getTopRatedTeams = asyncHandler(async (req, res) => {
-
   const teams = await Team.find({
     averageRating: { $gt: 0 }, // Only teams with ratings
   })
@@ -510,6 +525,7 @@ export {
   getMyTeams,
   deleteMyTeam,
   updateMyTeam,
+  uploadTeamImage,
   addLastedProject,
   updateLastedProject,
   deleteLastedProject,

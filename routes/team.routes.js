@@ -68,7 +68,7 @@ teamRouter.route('/my-team').get(protectedRoutes, getMyTeam);
 
 teamRouter
   .route('/my-team')
-  .put(protectedRoutes, updateMyTeamValidator, updateMyTeam)
+  .patch(protectedRoutes, updateMyTeamValidator, updateMyTeam)
   .delete(protectedRoutes, deleteMyTeam);
 
 teamRouter

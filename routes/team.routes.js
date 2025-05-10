@@ -8,9 +8,6 @@ import {
   deleteMyTeam,
   updateMyTeam,
   uploadTeamImage,
-  addLastedProject,
-  updateLastedProject,
-  deleteLastedProject,
   deleteTeam,
   updateTeamMemberRole,
   removeTeamMember,
@@ -23,8 +20,6 @@ import {
   createTeamValidator,
   getSpecificTeamValidator,
   updateMyTeamValidator,
-  addLastedProjectValidator,
-  updateLastedProjectValidator,
   deleteSpecificTeamValidator,
   updateMemberRoleValidator,
 } from '../utils/validators/teamValidator.js';
@@ -68,12 +63,22 @@ teamRouter.route('/my-team').get(protectedRoutes, getMyTeam);
 
 teamRouter
   .route('/my-team')
-  .patch(protectedRoutes, updateMyTeamValidator, updateMyTeam)
-  .delete(protectedRoutes, deleteMyTeam);
+  .patch(
+    protectedRoutes,
+    allowTo('teamLeader'),
+    updateMyTeamValidator,
+    updateMyTeam
+  )
+  .delete(protectedRoutes, allowTo('teamLeader'), deleteMyTeam);
 
 teamRouter
   .route('/my-team/logo')
-  .patch(protectedRoutes, upload.single('logo'), uploadTeamImage);
+  .patch(
+    protectedRoutes,
+    allowTo('teamLeader'),
+    upload.single('logo'),
+    uploadTeamImage
+  );
 
 teamRouter.route('/my-team/members').get(protectedRoutes, getTeamMembers);
 
@@ -86,15 +91,6 @@ teamRouter
   .delete(protectedRoutes, removeTeamMember);
 
 teamRouter.route('/my-team/statistics').get(protectedRoutes, getTeamStatistics);
-
-teamRouter
-  .route('/my-team/lasted-projects')
-  .post(protectedRoutes, addLastedProjectValidator, addLastedProject);
-
-teamRouter
-  .route('/my-team/lasted-projects/:projectId')
-  .put(protectedRoutes, updateLastedProjectValidator, updateLastedProject)
-  .delete(protectedRoutes, deleteLastedProject);
 
 teamRouter
   .route('/:id')

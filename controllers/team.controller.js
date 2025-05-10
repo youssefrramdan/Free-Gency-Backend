@@ -120,12 +120,16 @@ const uploadTeamImage = asyncHandler(async (req, res, next) => {
   if (!req.file) {
     return next(new ApiError('please upload logo', 404));
   }
-  req.body.logo = req.file.path;
-  const team = await Team.findByIdAndUpdate(
-    req.user._id,
-    { logo: req.body.logo },
-    { new: true, runValidators: true }
-  );
+
+  const team = await Team.findOne({ teamLeader: req.user._id });
+
+  if (!team) {
+    return next(new ApiError('Team not found', 404));
+  }
+
+  team.logo = req.file.path;
+  await team.save();
+
   res.status(200).json({
     message: 'success',
     data: team,

@@ -208,7 +208,7 @@ const getProjectsByInterests = asyncHandler(async (req, res, next) => {
   const projects = await Projects.find({
     category: { $in: req.user.interests },
   })
-    .populate('team', 'name logo')
+    .populate('team', 'name logo ratingCount averageRating')
     .populate('category', 'name')
     .sort('-createdAt');
 

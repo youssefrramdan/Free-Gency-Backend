@@ -19,10 +19,14 @@ const projectsRouter = express.Router({ mergeParams: true });
 
 // Public routes
 projectsRouter.get('/', createFilterObject, getAllProjects);
-projectsRouter.get('/:projectId', getSpecificProject);
 
 // Protected routes (require authentication)
 projectsRouter.use(protectedRoutes);
+
+// Specific routes first
+projectsRouter.get('/by-interests', getProjectsByInterests);
+projectsRouter.get('/my-team', getMyTeamProjects);
+projectsRouter.get('/team/:teamId', getTeamProjects);
 
 // Team leader routes
 projectsRouter.post(
@@ -32,14 +36,12 @@ projectsRouter.post(
   createProjectValidator,
   createProject
 );
-projectsRouter.get('/my-team', getMyTeamProjects);
-projectsRouter.get('/team/:teamId', getTeamProjects);
+
+// Dynamic parameter routes last
+projectsRouter.get('/:projectId', getSpecificProject);
 projectsRouter
   .route('/:projectId')
   .patch(allowTo('teamLeader'), updateSpecificProject)
   .delete(allowTo('teamLeader'), deleteSpecificProject);
-
-// Add this route before the other routes
-projectsRouter.get('/by-interests', getProjectsByInterests);
 
 export default projectsRouter;

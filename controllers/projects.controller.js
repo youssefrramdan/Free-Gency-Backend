@@ -208,8 +208,8 @@ const getProjectsByInterests = asyncHandler(async (req, res, next) => {
   const projects = await Projects.find({
     category: { $in: req.user.interests },
   })
-    .populate('team', 'name logo ratingCount averageRating')
-    .populate('category', 'name')
+    .populate('team', 'name logo')
+    .select('-projectUrl -completionDate -technologies -category -service -visibility -images -ratings -createdAt -updatedAt -__v -description -budget')
     .sort('-createdAt');
 
   res.status(200).json({

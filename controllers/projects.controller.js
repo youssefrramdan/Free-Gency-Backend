@@ -120,7 +120,11 @@ const getAllProjects = asyncHandler(async (req, res, next) => {
   const projects = await Projects.find(req.filterObject)
     .populate({
       path: 'team',
-      select: 'name category',
+      select: 'name category logo',
+      populate : {
+        path: 'category',
+        select: 'name',
+      }
     })
     .select('-__v -createdAt -updatedAt');
 

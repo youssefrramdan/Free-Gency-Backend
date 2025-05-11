@@ -143,6 +143,14 @@ const getSpecificProject = asyncHandler(async (req, res, next) => {
     .populate('team', 'name logo category')
     .populate('category', 'name')
     .populate('service', 'name')
+    .populate({
+      path: 'ratings',
+      select:"-ratedProject -updatedAt -__v",
+      populate: {
+        path: 'ratedBy',
+        select: 'name profileImage',
+      },
+    });
 
   // Check if project exists
   if (!project) {
@@ -210,7 +218,9 @@ const getProjectsByInterests = asyncHandler(async (req, res, next) => {
     category: { $in: req.user.interests },
   })
     .populate('team', 'name logo')
-    .select('-projectUrl -completionDate -technologies -category -service -visibility -images -ratings -createdAt -updatedAt -__v -description -budget')
+    .select(
+      '-projectUrl -completionDate -technologies -category -service -visibility -images -ratings -createdAt -updatedAt -__v -description -budget'
+    )
     .sort('-createdAt');
 
   res.status(200).json({

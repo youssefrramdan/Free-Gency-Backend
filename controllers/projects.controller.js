@@ -141,7 +141,8 @@ const getSpecificProject = asyncHandler(async (req, res, next) => {
   // Find the project and populate team and category information
   const project = await Projects.findById(projectId)
     .populate('team', 'name logo category')
-    .populate('category', 'name');
+    .populate('category', 'name')
+    .populate('service', 'name')
 
   // Check if project exists
   if (!project) {

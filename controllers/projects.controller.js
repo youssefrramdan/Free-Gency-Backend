@@ -74,10 +74,23 @@ const createProject = asyncHandler(async (req, res, next) => {
 
   // Handle image uploads
   const images = [];
-  if (req.files && req.files.length > 0) {
-    req.files.forEach(file => {
-      images.push(file.path);
-    });
+  let imageCover = null;
+
+  if (req.files) {
+    // Handle multiple images
+    if (req.files.images) {
+      req.files.images.forEach(file => {
+        images.push(file.path);
+      });
+    }
+
+    // Handle image cover
+    if (req.files.imageCover && req.files.imageCover.length > 0) {
+      imageCover = req.files.imageCover[0].path;
+    } else if (images.length > 0) {
+      // If no imageCover provided but images exist, use first image as cover
+      imageCover = images[0];
+    }
   }
 
   // Create project with all required fields
@@ -86,6 +99,7 @@ const createProject = asyncHandler(async (req, res, next) => {
     description: req.body.description,
     budget: req.body.budget,
     images: images,
+    imageCover: imageCover,
     projectUrl: req.body.projectUrl,
     technologies: req.body.technologies,
     completionDate: req.body.completionDate,
@@ -121,10 +135,10 @@ const getAllProjects = asyncHandler(async (req, res, next) => {
     .populate({
       path: 'team',
       select: 'name category logo',
-      populate : {
+      populate: {
         path: 'category',
         select: 'name',
-      }
+      },
     })
     .select('-__v -createdAt -updatedAt');
 
@@ -149,7 +163,7 @@ const getSpecificProject = asyncHandler(async (req, res, next) => {
     .populate('service', 'name')
     .populate({
       path: 'ratings',
-      select:"-ratedProject -updatedAt -__v",
+      select: '-ratedProject -updatedAt -__v',
       populate: {
         path: 'ratedBy',
         select: 'name profileImage',
@@ -244,22 +258,35 @@ const getProjectsByInterests = asyncHandler(async (req, res, next) => {
  * @access  Private/Team Leader
  */
 const updateSpecificProject = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
+  const { projectId } = req.params;
 
-  const project = await Projects.findById(id);
+  const project = await Projects.findById(projectId).populate(
+    'team',
+    'teamLeader'
+  );
 
   if (!project) {
     return next(new ApiError('Team project not found', 404));
   }
 
   // Use isAuthorized to check if user is team leader
-  isAuthorized(
-    req.user._id,
-    project.team.teamLeader || project.team,
-    'update projects'
-  );
+  isAuthorized(req.user._id, project.team.teamLeader, 'update projects');
 
-  const updatedProject = await Projects.findByIdAndUpdate(id, req.body, {
+  // Handle image uploads
+  if (req.files) {
+    // Handle multiple images
+    if (req.files.images) {
+      const newImages = req.files.images.map(file => file.path);
+      req.body.images = [...project.images, ...newImages];
+    }
+
+    // Handle image cover
+    if (req.files.imageCover && req.files.imageCover.length > 0) {
+      req.body.imageCover = req.files.imageCover[0].path;
+    }
+  }
+
+  const updatedProject = await Projects.findByIdAndUpdate(projectId, req.body, {
     new: true,
     runValidators: true,
   });

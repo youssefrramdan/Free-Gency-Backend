@@ -15,6 +15,9 @@ const ProjectsSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Project budget is required'],
     },
+    imageCover: {
+        type : String,
+    },
     images: [String],
     projectUrl: String,
     technologies: [String],

@@ -30,7 +30,10 @@ projectsRouter.post(
   '/',
   protectedRoutes,
   allowTo('teamLeader'),
-  upload.array('images'),
+  upload.fields([
+    { name: 'images', maxCount: 10 },
+    { name: 'imageCover', maxCount: 1 },
+  ]),
   createProjectValidator,
   createProject
 );
@@ -39,7 +42,15 @@ projectsRouter.post(
 projectsRouter.get('/:projectId', getSpecificProject);
 projectsRouter
   .route('/:projectId')
-  .patch(protectedRoutes, allowTo('teamLeader'), updateSpecificProject)
+  .patch(
+    protectedRoutes,
+    allowTo('teamLeader'),
+    upload.fields([
+      { name: 'images', maxCount: 10 },
+      { name: 'imageCover', maxCount: 1 },
+    ]),
+    updateSpecificProject
+  )
   .delete(protectedRoutes, allowTo('teamLeader'), deleteSpecificProject);
 
 export default projectsRouter;

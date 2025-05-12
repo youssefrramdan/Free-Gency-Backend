@@ -17,6 +17,7 @@ import servicesRouter from './services.routes.js';
 import projectsRouter from './projects.routes.js';
 
 const categoryRouter = express.Router();
+const upload = createUploader("category");
 
 // Nested route - Services as Subcategories
 categoryRouter.use('/:categoryId/services', servicesRouter);
@@ -27,12 +28,12 @@ categoryRouter.use('/:categoryId/projects', projectsRouter);
 categoryRouter
   .route('/')
   .get(getAllCategories)
-  .post(createCategoryValidator, createCategory);
+  .post(createCategoryValidator, upload.single('imageCover'), createCategory);
 
 categoryRouter
   .route('/:id')
   .get(getSpecificCategoryValidator, getSpecificCategory)
-  .put(updateCategoryValidator, updateCategory)
+  .put(updateCategoryValidator, upload.single('imageCover'), updateCategory)
   .delete(deleteCategoryValidator, deletegetCategory);
 
 export default categoryRouter;

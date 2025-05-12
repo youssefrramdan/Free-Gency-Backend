@@ -7,11 +7,18 @@ const categorySchema = new mongoose.Schema(
       required: [true, 'Category name is required'],
       trim: true,
     },
+    nameAr: {
+      type: String,
+      required: [true, 'Category name is required'],
+      trim: true,
+    },
     status: {
       type: String,
       enum: ['active', 'inactive'],
       default: 'active',
     },
+    color: String,
+    imageCover: String,
   },
   {
     timestamps: true,
@@ -47,22 +54,6 @@ categorySchema.virtual('servicesCount', {
   localField: '_id',
   count: true,
 });
-
-// // Virtual for teams in this category
-// categorySchema.virtual('teams', {
-//   ref: 'Team',
-//   localField: '_id',
-//   foreignField: 'category',
-//   options: { sort: { rating: -1 } }, // Sort by rating in descending order
-// });
-
-// // Virtual for projects in this category
-// categorySchema.virtual('projects', {
-//   ref: 'Project',
-//   localField: '_id',
-//   foreignField: 'category',
-//   options: { sort: { createdAt: -1 } }, // Sort by creation date in descending order
-// });
 
 // Indexes
 categorySchema.index({ name: 1 });

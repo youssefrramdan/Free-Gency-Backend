@@ -8,6 +8,9 @@ import ApiError from '../utils/apiError.js';
  * @access  Private/Admin
  */
 const createCategory = asyncHandler(async (req, res, next) => {
+  if (req.file) {
+    req.body.imageCover = req.file.path;
+  }
   const category = await Category.create(req.body);
 
   res.status(201).json({
@@ -24,7 +27,7 @@ const createCategory = asyncHandler(async (req, res, next) => {
 const updateCategory = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   if (req.file) {
-    req.body.image = req.file.path;
+    req.body.imageCover = req.file.path;
   }
   const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
     new: true,

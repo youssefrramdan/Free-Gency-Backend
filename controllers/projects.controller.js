@@ -69,55 +69,40 @@ const createFilterObject = (req, res, next) => {
  * @access  Private/Team Leader
  */
 const createProject = asyncHandler(async (req, res, next) => {
-  // Check if team exists
-  const team = await Team.findById(req.user.createdTeam);
+  // Check if team exists and user is authorized in one query
+  const team = await Team.findOne({
+    _id: req.user.createdTeam,
+    teamLeader: req.user._id,
+  });
+
   if (!team) {
-    return next(new ApiError('Team not found', 404));
+    return next(new ApiError('Team not found or you are not authorized', 404));
   }
 
-  // Use isAuthorized to check if user is team leader
-  isAuthorized(req.user._id, team.teamLeader, 'add projects');
-
-  // Handle image uploads
-  const images = [];
-  let imageCover = null;
-
-  if (req.files) {
-    // Handle multiple images
-    if (req.files.images) {
-      req.files.images.forEach(file => {
-        images.push(file.path);
-      });
-    }
-
-    // Handle image cover
-    if (req.files.imageCover && req.files.imageCover.length > 0) {
-      imageCover = req.files.imageCover[0].path;
-    } else if (images.length > 0) {
-      // If no imageCover provided but images exist, use first image as cover
-      imageCover = images[0];
-    }
-  }
+  // Handle image uploads more efficiently
+  const images = req.files?.images?.map(file => file.path) || [];
+  const imageCover =
+    req.files?.imageCover?.[0]?.path || (images.length > 0 ? images[0] : null);
 
   // Create project with all required fields
   const project = await Projects.create({
     title: req.body.title,
     description: req.body.description,
     budget: req.body.budget,
-    images: images,
-    imageCover: imageCover,
+    images,
+    imageCover,
     projectUrl: req.body.projectUrl,
     technologies: req.body.technologies,
     completionDate: req.body.completionDate,
-    team: req.user.createdTeam,
-    category: req.body.category,
+    team: team._id,
+    category: team.category, // Use category from team
     service: req.body.service,
     visibility: req.body.visibility || 'public',
   });
 
-  // Add project to team
+  // Update team with new project in parallel with response
   team.Projects.push(project._id);
-  await team.save();
+  team.save().catch(err => console.error('Error updating team:', err));
 
   res.status(201).json({
     status: 'success',
@@ -146,7 +131,8 @@ const getAllProjects = asyncHandler(async (req, res, next) => {
         select: 'name',
       },
     })
-    .select('-__v -createdAt -updatedAt');
+    .select('-__v -createdAt -updatedAt')
+    .lean();
 
   res.status(200).json({
     message: 'success',
@@ -162,21 +148,21 @@ const getAllProjects = asyncHandler(async (req, res, next) => {
 const getSpecificProject = asyncHandler(async (req, res, next) => {
   const { projectId } = req.params;
 
-  // Find the project and populate team and category information
+  // Find the project and populate only necessary fields
   const project = await Projects.findById(projectId)
     .populate('team', 'name logo category')
     .populate('category', 'name')
     .populate('service', 'name')
     .populate({
       path: 'ratings',
-      select: '-ratedProject -updatedAt -__v',
+      select: 'rating comment ratedBy',
       populate: {
         path: 'ratedBy',
         select: 'name profileImage',
       },
-    });
+    })
+    .lean();
 
-  // Check if project exists
   if (!project) {
     return next(new ApiError(`No project found with ID ${projectId}`, 404));
   }
@@ -197,7 +183,9 @@ const getTeamProjects = asyncHandler(async (req, res, next) => {
 
   const projects = await Projects.find({ team: teamId })
     .populate('team', 'name logo')
-    .populate('category', 'name');
+    .populate('category', 'name')
+    .select('-__v -createdAt -updatedAt')
+    .lean();
 
   res.status(200).json({
     status: 'success',
@@ -214,7 +202,9 @@ const getTeamProjects = asyncHandler(async (req, res, next) => {
 const getMyTeamProjects = asyncHandler(async (req, res, next) => {
   const projects = await Projects.find({ team: req.user.createdTeam })
     .populate('team', 'name logo')
-    .populate('category', 'name');
+    .populate('category', 'name')
+    .select('-__v -createdAt -updatedAt')
+    .lean();
 
   res.status(200).json({
     status: 'success',
@@ -229,7 +219,7 @@ const getMyTeamProjects = asyncHandler(async (req, res, next) => {
  * @access  Private/Authenticated
  */
 const getProjectsByInterests = asyncHandler(async (req, res, next) => {
-  if (!req.user.interests || req.user.interests.length === 0) {
+  if (!req.user.interests?.length) {
     return res.status(200).json({
       status: 'success',
       results: 0,
@@ -242,10 +232,9 @@ const getProjectsByInterests = asyncHandler(async (req, res, next) => {
     category: { $in: req.user.interests },
   })
     .populate('team', 'name logo')
-    .select(
-      '-projectUrl -completionDate -technologies -category -service -visibility -images -ratings -createdAt -updatedAt -__v -description -budget'
-    )
-    .sort('-createdAt');
+    .select('title imageCover team')
+    .sort('-createdAt')
+    .lean();
 
   res.status(200).json({
     status: 'success',
@@ -266,28 +255,29 @@ const getProjectsByInterests = asyncHandler(async (req, res, next) => {
 const updateSpecificProject = asyncHandler(async (req, res, next) => {
   const { projectId } = req.params;
 
-  const project = await Projects.findById(projectId).populate(
-    'team',
-    'teamLeader'
-  );
+  // Find project and check authorization in one query
+  const project = await Projects.findById(projectId)
+    .populate('team', 'teamLeader')
+    .lean();
 
   if (!project) {
-    return next(new ApiError('Team project not found', 404));
+    return next(new ApiError('Project not found', 404));
   }
 
-  // Use isAuthorized to check if user is team leader
-  isAuthorized(req.user._id, project.team.teamLeader, 'update projects');
+  // Check authorization
+  if (project.team.teamLeader.toString() !== req.user._id.toString()) {
+    return next(new ApiError('Not authorized to update this project', 403));
+  }
 
-  // Handle image uploads
+  // Handle image uploads efficiently
   if (req.files) {
-    // Handle multiple images
     if (req.files.images) {
-      const newImages = req.files.images.map(file => file.path);
-      req.body.images = [...project.images, ...newImages];
+      req.body.images = [
+        ...(project.images || []),
+        ...req.files.images.map(file => file.path),
+      ];
     }
-
-    // Handle image cover
-    if (req.files.imageCover && req.files.imageCover.length > 0) {
+    if (req.files.imageCover?.length) {
       req.body.imageCover = req.files.imageCover[0].path;
     }
   }
@@ -295,7 +285,7 @@ const updateSpecificProject = asyncHandler(async (req, res, next) => {
   const updatedProject = await Projects.findByIdAndUpdate(projectId, req.body, {
     new: true,
     runValidators: true,
-  });
+  }).lean();
 
   res.status(200).json({
     status: 'success',
@@ -311,28 +301,27 @@ const updateSpecificProject = asyncHandler(async (req, res, next) => {
 const deleteSpecificProject = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
-  const project = await Projects.findById(id);
+  // Find project and check authorization in one query
+  const project = await Projects.findById(id)
+    .populate('team', 'teamLeader')
+    .lean();
 
   if (!project) {
-    return next(new ApiError('Team project not found', 404));
+    return next(new ApiError('Project not found', 404));
   }
 
-  // Use isAuthorized to check if user is team leader
-  isAuthorized(
-    req.user._id,
-    project.team.teamLeader || project.team,
-    'delete projects'
-  );
+  // Check authorization
+  if (project.team.teamLeader.toString() !== req.user._id.toString()) {
+    return next(new ApiError('Not authorized to delete this project', 403));
+  }
 
-  // Remove project from team
-  const team = await Team.findById(project.team);
-  team.Projects = team.Projects.filter(
-    projectId => projectId.toString() !== id
-  );
-  await team.save();
-
-  // Delete project
-  await Projects.findByIdAndDelete(id);
+  // Remove project from team and delete project in parallel
+  await Promise.all([
+    Team.findByIdAndUpdate(project.team._id, {
+      $pull: { Projects: id },
+    }),
+    Projects.findByIdAndDelete(id),
+  ]);
 
   res.status(204).json({
     status: 'success',

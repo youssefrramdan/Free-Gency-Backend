@@ -2,6 +2,7 @@ import { check, param } from 'express-validator';
 import validatorMiddleware from '../../middlewares/validatorMiddleware.js';
 import Category from '../../models/category.model.js';
 import Service from '../../models/service.model.js';
+import Team from '../../models/team.model.js';
 
 const createProjectValidator = [
   check('title').notEmpty().withMessage('Project title is required'),
@@ -20,33 +21,37 @@ const createProjectValidator = [
   check('technologies.*')
     .isString()
     .withMessage('Each technology must be a string'),
-  check('category')
-    .notEmpty()
-    .withMessage('Category is required')
-    .isMongoId()
-    .withMessage('Category must be a valid Mongo ID')
-    .custom(async val => {
-      const category = await Category.findById(val);
-      if (!category) {
-        throw new Error('Category does not exist');
-      }
-      return true;
-    }),
   check('service')
     .notEmpty()
     .withMessage('Service is required')
     .isMongoId()
     .withMessage('Service must be a valid Mongo ID')
     .custom(async (val, { req }) => {
-      const service = await Service.findById(val);
-      if (!service) {
-        throw new Error('Service does not exist');
+      try {
+        // Get team and service in parallel using Promise.all
+        const [team, service] = await Promise.all([
+          Team.findById(req.user.createdTeam).select('category'),
+          Service.findById(val).select('category'),
+        ]);
+
+        if (!service) {
+          throw new Error('Service does not exist');
+        }
+        if (!team) {
+          throw new Error('Team not found');
+        }
+
+        // Check if service belongs to the team's category
+        if (service.category.toString() !== team.category.toString()) {
+          throw new Error("Service does not belong to your team's category");
+        }
+
+        // Store team category in request for later use
+        req.teamCategory = team.category;
+        return true;
+      } catch (error) {
+        throw new Error(error.message);
       }
-      // Check if service belongs to the given category
-      if (service.category.toString() !== req.body.category) {
-        throw new Error('Service does not belong to the specified category');
-      }
-      return true;
     }),
   validatorMiddleware,
 ];

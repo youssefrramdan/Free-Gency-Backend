@@ -48,6 +48,7 @@ const teamSchema = new mongoose.Schema(
       minlength: [100, 'About us must be at least 100 characters'],
       maxlength: [2000, 'About us cannot exceed 2000 characters'],
     },
+    skills: [String],
     joinRequests: [
       {
         user: {

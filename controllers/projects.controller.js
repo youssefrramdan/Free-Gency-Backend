@@ -7,6 +7,12 @@ import Team from '../models/team.model.js';
 // Authorization Helper
 // ==========================================
 
+const setCategoryIdToBody = (req, res, next) => {
+  // Nested route (Create)
+  if (!req.body.category) req.body.category = req.params.categoryId;
+  next();
+};
+
 /**
  * Checks if the current user is authorized to perform an action
  * @param {string} userId - The ID of the user to check authorization for
@@ -342,5 +348,6 @@ export {
   deleteSpecificProject,
   getSpecificProject,
   createFilterObject,
+  setCategoryIdToBody,
   getProjectsByInterests,
 };

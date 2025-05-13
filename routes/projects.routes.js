@@ -9,6 +9,7 @@ import {
   getSpecificProject,
   createFilterObject,
   getProjectsByInterests,
+  setCategoryIdToBody,
 } from '../controllers/projects.controller.js';
 import { protectedRoutes, allowTo } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
@@ -29,6 +30,7 @@ projectsRouter.get('/team/:teamId', protectedRoutes, getTeamProjects);
 projectsRouter.post(
   '/',
   protectedRoutes,
+  setCategoryIdToBody   ,
   allowTo('teamLeader'),
   upload.fields([
     { name: 'images', maxCount: 10 },

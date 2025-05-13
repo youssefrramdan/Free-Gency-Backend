@@ -27,7 +27,10 @@ const getAllTeams = asyncHandler(async (req, res, next) => {
  */
 const getSpecificTeam = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
-  const team = await Team.findById(id);
+  const team = await Team.findById(id).populate(
+    'Projects',
+    'title imageCover averageRating ratingCount'
+  );
   if (!team) {
     return next(new ApiError(`There isn't a team with this id: ${id}`, 404));
   }

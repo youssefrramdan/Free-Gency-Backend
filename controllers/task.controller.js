@@ -85,9 +85,17 @@ const createTask = asyncHandler(async (req, res) => {
  * @route   GET /api/v1/tasks
  * @access  Private (Admin)
  */
-const getAllTasks = asyncHandler(async (req, res) => {
-  // Get all tasks
-  const tasks = await Task.find()
+const getAllTasks = asyncHandler(async (req, res, next) => {
+  const filterObject = {};
+
+  if (req.query.filterBy==='category') {
+    const team = await Team.findOne({ teamLeader: req.user._id });
+    if (!team) {
+      return next(new ApiError('Team not found', 404));
+    }
+    filterObject.category = team.category;
+  }
+  const tasks = await Task.find(filterObject)
     .populate('client', 'name profileImage')
     .populate('category', 'name')
     .populate({
@@ -111,9 +119,11 @@ const getAllTasks = asyncHandler(async (req, res) => {
 const getAllMyTasks = asyncHandler(async (req, res) => {
   // Get tasks for the authenticated client
   const clientId = req.user._id;
-  const tasks = await Task.find({ client: clientId }).select(
-    '-category -service -client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v'
-  ).sort("-createdAt")
+  const tasks = await Task.find({ client: clientId })
+    .select(
+      '-category -service -client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v'
+    )
+    .sort('-createdAt');
   // Count posted (all tasks), in-progress, and completed
   const [posted, inProgress, completed] = await Promise.all([
     Task.countDocuments({ client: clientId }),
@@ -166,8 +176,8 @@ const getTasksByTeamCategory = asyncHandler(async (req, res, next) => {
  */
 const getSpecificTask = asyncHandler(async (req, res, next) => {
   const task = await Task.findById(req.params.id)
-  .populate('client', 'name profileImage')
-  .populate('category', 'name')
+    .populate('client', 'name profileImage')
+    .populate('category', 'name')
     .populate({
       path: 'service',
       select: 'name',

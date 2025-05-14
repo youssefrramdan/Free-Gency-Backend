@@ -113,7 +113,7 @@ const getAllMyTasks = asyncHandler(async (req, res) => {
   const clientId = req.user._id;
   const tasks = await Task.find({ client: clientId }).select(
     '-category -service -client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v'
-  );
+  ).sort("-createdAt")
   // Count posted (all tasks), in-progress, and completed
   const [posted, inProgress, completed] = await Promise.all([
     Task.countDocuments({ client: clientId }),

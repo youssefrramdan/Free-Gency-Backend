@@ -88,7 +88,7 @@ const createTask = asyncHandler(async (req, res) => {
 const getAllTasks = asyncHandler(async (req, res, next) => {
   const filterObject = {};
 
-  if (req.query.filterBy==='category') {
+  if (req.query.filterBy === 'category') {
     const team = await Team.findOne({ teamLeader: req.user._id });
     if (!team) {
       return next(new ApiError('Team not found', 404));
@@ -120,8 +120,10 @@ const getAllMyTasks = asyncHandler(async (req, res) => {
   // Get tasks for the authenticated client
   const clientId = req.user._id;
   const tasks = await Task.find({ client: clientId })
+    .populate('category', 'name')
+    .populate('service', 'name')
     .select(
-      '-category -service -client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v'
+      '-service -client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v'
     )
     .sort('-createdAt');
   // Count posted (all tasks), in-progress, and completed

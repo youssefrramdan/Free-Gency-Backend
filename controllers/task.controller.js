@@ -123,7 +123,7 @@ const getAllMyTasks = asyncHandler(async (req, res) => {
     .populate('category', 'name')
     .populate('service', 'name')
     .select(
-      '-service -client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v'
+      '-client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v'
     )
     .sort('-createdAt');
   // Count posted (all tasks), in-progress, and completed

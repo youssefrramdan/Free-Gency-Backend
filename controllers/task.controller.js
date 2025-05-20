@@ -102,7 +102,8 @@ const getAllTasks = asyncHandler(async (req, res, next) => {
       path: 'service',
       select: 'name',
       model: 'Service',
-    });
+    })
+    .sort({ createdAt: -1 });
 
   res.status(200).json({
     status: 'success',

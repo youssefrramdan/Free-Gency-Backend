@@ -208,9 +208,9 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
 
   await task.save();
 
-  // Delete all task request notifications for this task's requests
+  // Delete all task request notifications for this task
   await UserNotification.deleteMany({
-    data: task.teamRequests.map(teamRequest => teamRequest._id.toString()),
+    data: task._id.toString(),
     type: 'taskRequest',
   });
 

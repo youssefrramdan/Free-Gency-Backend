@@ -208,11 +208,6 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
 
   await task.save();
 
-  // Delete all task request notifications for this task
-  await UserNotification.deleteMany({
-    data: task._id.toString(),
-    type: 'taskRequest',
-  });
 
   // Send notifications
   await Promise.all([

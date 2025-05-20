@@ -53,6 +53,11 @@ taskRouter
   .get(allowTo('teamLeader'), getTasksByTeamCategory);
 taskRouter.route('/me').get(getAllMyTasks);
 
+// Save/Unsave Routes
+taskRouter.get('/saved', getSavedTasks);
+taskRouter.post('/:id/save', saveTask);
+taskRouter.delete('/:id/save', unsaveTask);
+
 taskRouter
   .route('/:id')
   .get(getSpecificTaskValidator, getSpecificTask)
@@ -77,11 +82,6 @@ taskRouter
   );
 
 taskRouter.route('/requests/:requestId').get(getSpecificTaskRequest);
-
-// Save/Unsave Routes
-taskRouter.get('/saved', getSavedTasks);
-taskRouter.post('/:id/save', saveTask);
-taskRouter.delete('/:id/save', unsaveTask);
 
 taskRouter.use(allowTo('client'));
 

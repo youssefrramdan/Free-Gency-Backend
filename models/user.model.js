@@ -77,6 +77,12 @@ const userSchema = new mongoose.Schema(
       default:
         'cpxejH2vK1RwXoumhrtwKG:APA91bExzMeZD9sXLX4rF3FDnyBNsINTzDAWqw_zXloyVw6Fiz9mUVVfBtPp2-moLnVnZnW7rQ_xId3Pdsc0JCiG92i6aWkJpLzPQZtxwd69B4s3Il6ZLbQ',
     },
+    savedTasks: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Task',
+      },
+    ],
   },
   {
     timestamps: true,

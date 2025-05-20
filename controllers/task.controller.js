@@ -3,6 +3,7 @@ import ApiError from '../utils/apiError.js';
 import Task from '../models/task.model.js';
 import Team from '../models/team.model.js';
 import NotificationService from '../service/NotificationService.js';
+import User from '../models/user.model.js';
 
 // ==========================================
 // Authorization Helper
@@ -326,6 +327,90 @@ const deleteTaskFile = asyncHandler(async (req, res) => {
   });
 });
 
+// ==========================================
+// Save/Unsave Task Operations
+// ==========================================
+
+/**
+ * @desc    Save task to user's saved tasks
+ * @route   POST /api/v1/tasks/:id/save
+ * @access  Private
+ */
+const saveTask = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.user._id);
+  const task = await Task.findById(req.params.id);
+
+  if (!task) {
+    return next(new ApiError('Task not found', 404));
+  }
+
+  // Check if task is already saved
+  if (user.savedTasks.includes(task._id)) {
+    return next(new ApiError('Task is already saved', 400));
+  }
+
+  // Add task to saved tasks
+  user.savedTasks.push(task._id);
+  await user.save();
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Task saved successfully',
+  });
+});
+
+/**
+ * @desc    Remove task from user's saved tasks
+ * @route   DELETE /api/v1/tasks/:id/save
+ * @access  Private
+ */
+const unsaveTask = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.user._id);
+  const task = await Task.findById(req.params.id);
+
+  if (!task) {
+    return next(new ApiError('Task not found', 404));
+  }
+
+  // Check if task is saved
+  if (!user.savedTasks.includes(task._id)) {
+    return next(new ApiError('Task is not saved', 400));
+  }
+
+  // Remove task from saved tasks
+  user.savedTasks = user.savedTasks.filter(
+    savedTask => savedTask.toString() !== task._id.toString()
+  );
+  await user.save();
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Task removed from saved tasks',
+  });
+});
+
+/**
+ * @desc    Get user's saved tasks
+ * @route   GET /api/v1/tasks/saved
+ * @access  Private
+ */
+const getSavedTasks = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.user._id).populate({
+    path: 'savedTasks',
+    populate: [
+      { path: 'client', select: 'name profileImage' },
+      { path: 'category', select: 'name' },
+      { path: 'service', select: 'name' },
+    ],
+  });
+
+  res.status(200).json({
+    status: 'success',
+    results: user.savedTasks.length,
+    data: user.savedTasks,
+  });
+});
+
 export {
   createTask,
   getAllTasks,
@@ -336,4 +421,7 @@ export {
   deleteSpecificTask,
   addTaskFiles,
   deleteTaskFile,
+  saveTask,
+  unsaveTask,
+  getSavedTasks,
 };

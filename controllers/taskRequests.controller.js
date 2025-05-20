@@ -4,6 +4,7 @@ import Task from '../models/task.model.js';
 import ApiError from '../utils/apiError.js';
 import NotificationService from '../service/NotificationService.js';
 import Team from '../models/team.model.js';
+import UserNotification from '../models/UserNotification.model.js';
 
 // ==========================================
 // Authorization helper
@@ -168,6 +169,8 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
   const task = await Task.findOne({ 'teamRequests._id': requestId });
 
   if (!task) return next(new ApiError('Task request not found', 404));
+  if (task.assignedTeam)
+    return next(new ApiError('This task is already assigned to a team', 400));
   if (task.client.toString() !== req.user._id.toString()) {
     return next(
       new ApiError('You are not authorized to manage this task request', 403)
@@ -204,6 +207,12 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
   });
 
   await task.save();
+
+  // Delete all task request notifications for this task's requests
+  await UserNotification.deleteMany({
+    data: task.teamRequests.map(teamRequest => teamRequest._id.toString()),
+    type: 'taskRequest',
+  });
 
   // Send notifications
   await Promise.all([

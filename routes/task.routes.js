@@ -78,15 +78,15 @@ taskRouter
 
 taskRouter.route('/requests/:requestId').get(getSpecificTaskRequest);
 
+// Save/Unsave Routes
+taskRouter.get('/saved', getSavedTasks);
+taskRouter.post('/:id/save', saveTask);
+taskRouter.delete('/:id/save', unsaveTask);
+
 taskRouter.use(allowTo('client'));
 
 taskRouter.route('/requests/:requestId/accept').patch(acceptTaskRequest);
 taskRouter.route('/requests/:requestId/reject').patch(rejectTaskRequest);
 taskRouter.route('/requests/:requestId').delete(deleteTaskRequest);
-
-// Save/Unsave Routes
-taskRouter.get('/saved', getSavedTasks);
-taskRouter.post('/:id/save', saveTask);
-taskRouter.delete('/:id/save', unsaveTask);
 
 export default taskRouter;

@@ -174,7 +174,10 @@ const deleteMyTeam = asyncHandler(async (req, res, next) => {
  * @access  Private/Authenticated
  */
 const getMyTeam = asyncHandler(async (req, res, next) => {
-  const team = await Team.findOne({ teamLeader: req.user._id });
+  const team = await Team.findOne({ teamLeader: req.user._id }).populate(
+    'Projects',
+    'title imageCover averageRating ratingCount'
+  );
   if (!team) {
     return next(new ApiError('You do not have a team', 404));
   }

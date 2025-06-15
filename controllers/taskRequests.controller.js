@@ -5,6 +5,7 @@ import ApiError from '../utils/apiError.js';
 import NotificationService from '../service/NotificationService.js';
 import Team from '../models/team.model.js';
 import UserNotification from '../models/UserNotification.model.js';
+import User from '../models/user.model.js';
 
 // ==========================================
 // Authorization helper
@@ -208,14 +209,18 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
 
   await task.save();
 
-  // Delete taskPosted notifications for all team leaders except the assigned team's leader
-  await UserNotification.deleteMany({
-    type: 'taskPosted',
-    data: task._id.toString(),
-  });
-
   // Send notifications
   await Promise.all([
+    // Delete taskPosted notifications for all team leaders
+    await UserNotification.deleteMany({
+      type: 'taskPosted',
+      data: task._id.toString(),
+    }),
+    // Remove task from all users' saved tasks
+    await User.updateMany(
+      { savedTasks: task._id },
+      { $pull: { savedTasks: task._id } }
+    ),
     // Send acceptance notification to the accepted team
     NotificationService.sendNotificationToTeam(
       team.teamLeader.fcmToken,
@@ -235,32 +240,6 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
         data: task._id,
       }
     ),
-    // Send rejection notifications to other teams
-    // ...pendingRequests.map(async rejectedRequest => {
-    //   const rejectedTeam = await Team.findById(rejectedRequest.team).populate(
-    //     'teamLeader',
-    //     'fcmToken name profileImage'
-    //   );
-
-    //   await NotificationService.sendNotificationToTeam(
-    //     rejectedTeam.teamLeader.fcmToken,
-    //     'Task Request Rejected',
-    //     buildNotificationMessage(task, task.client, rejectedRequest),
-    //     task.client.profileImage,
-    //     rejectedTeam.teamLeader._id,
-    //     'taskRejected',
-    //     `/tasks/${task._id}`,
-    //     {
-    //       taskId: task._id,
-    //       requestId: rejectedRequest._id,
-    //       teamId: rejectedTeam._id,
-    //       teamName: rejectedTeam.name,
-    //       budget: rejectedRequest.budget,
-    //       status: 'rejected',
-    //       data: task._id,
-    //     }
-    //   );
-    // }),
   ]);
 
   res.status(200).json({

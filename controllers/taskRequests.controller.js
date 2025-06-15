@@ -212,7 +212,6 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
   await UserNotification.deleteMany({
     type: 'taskPosted',
     data: task._id.toString(),
-    userId: { $ne: team.teamLeader._id },
   });
 
   // Send notifications
@@ -237,31 +236,31 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
       }
     ),
     // Send rejection notifications to other teams
-    ...pendingRequests.map(async rejectedRequest => {
-      const rejectedTeam = await Team.findById(rejectedRequest.team).populate(
-        'teamLeader',
-        'fcmToken name profileImage'
-      );
+    // ...pendingRequests.map(async rejectedRequest => {
+    //   const rejectedTeam = await Team.findById(rejectedRequest.team).populate(
+    //     'teamLeader',
+    //     'fcmToken name profileImage'
+    //   );
 
-      await NotificationService.sendNotificationToTeam(
-        rejectedTeam.teamLeader.fcmToken,
-        'Task Request Rejected',
-        buildNotificationMessage(task, task.client, rejectedRequest),
-        task.client.profileImage,
-        rejectedTeam.teamLeader._id,
-        'taskRejected',
-        `/tasks/${task._id}`,
-        {
-          taskId: task._id,
-          requestId: rejectedRequest._id,
-          teamId: rejectedTeam._id,
-          teamName: rejectedTeam.name,
-          budget: rejectedRequest.budget,
-          status: 'rejected',
-          data: task._id,
-        }
-      );
-    }),
+    //   await NotificationService.sendNotificationToTeam(
+    //     rejectedTeam.teamLeader.fcmToken,
+    //     'Task Request Rejected',
+    //     buildNotificationMessage(task, task.client, rejectedRequest),
+    //     task.client.profileImage,
+    //     rejectedTeam.teamLeader._id,
+    //     'taskRejected',
+    //     `/tasks/${task._id}`,
+    //     {
+    //       taskId: task._id,
+    //       requestId: rejectedRequest._id,
+    //       teamId: rejectedTeam._id,
+    //       teamName: rejectedTeam.name,
+    //       budget: rejectedRequest.budget,
+    //       status: 'rejected',
+    //       data: task._id,
+    //     }
+    //   );
+    // }),
   ]);
 
   res.status(200).json({
@@ -339,6 +338,13 @@ const deleteTaskRequest = asyncHandler(async (req, res, next) => {
   if (!request || request.status !== 'pending') {
     return next(new ApiError('Can only delete pending requests', 400));
   }
+
+  // Delete the associated notification for the client
+  await UserNotification.deleteOne({
+    type: 'taskRequest',
+    data: requestId,
+    userId: task.client,
+  });
 
   task.teamRequests.pull(requestId);
   await task.save();

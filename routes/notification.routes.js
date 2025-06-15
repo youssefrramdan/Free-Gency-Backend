@@ -7,6 +7,8 @@ import {
   deleteNotification,
   getUnreadCount,
   deleteExpiredNotifications,
+  getAllNotifications,
+  clearAllNotifications,
 } from '../controllers/notification.controller.js';
 import { protectedRoutes } from '../controllers/auth.controller.js';
 
@@ -19,6 +21,9 @@ router.post('/', createNotification);
 
 // Get user's notifications with filters
 router.get('/', getMyNotifications);
+
+// Get all notifications (admin only)
+router.get('/all', getAllNotifications);
 
 // Get unread notifications count
 router.get('/unread-count', getUnreadCount);
@@ -34,5 +39,8 @@ router.delete('/:notificationId', deleteNotification);
 
 // Delete expired notifications
 router.delete('/expired', deleteExpiredNotifications);
+
+// Clear all notifications for a user
+router.delete('/clear-all', clearAllNotifications);
 
 export default router;

@@ -158,9 +158,10 @@ const getTasksByTeamCategory = asyncHandler(async (req, res, next) => {
     return next(new ApiError('Team not found', 404));
   }
 
-  // Get tasks that match team's category
+  // Get tasks that match team's category and are not assigned to any team
   const tasks = await Task.find({
     category: team.category,
+    assignedTeam: { $exists: false },
   })
     .populate('client', 'name email')
     .populate('category', 'name')

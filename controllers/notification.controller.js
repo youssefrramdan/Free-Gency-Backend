@@ -183,3 +183,35 @@ export const deleteExpiredNotifications = asyncHandler(
     });
   }
 );
+
+/**
+ * @desc    Get all notifications (admin only)
+ * @route   GET /api/v1/notifications
+ * @access  Private/Admin
+ */
+export const getAllNotifications = asyncHandler(async (req, res, next) => {
+  const notifications = await UserNotification.find()
+    .sort('-createdAt')
+    .populate('userId', 'name email');
+
+  res.status(200).json({
+    status: 'success',
+    results: notifications.length,
+    data: notifications,
+  });
+});
+
+/**
+ * @desc    Clear all notifications for a user
+ * @route   DELETE /api/v1/notifications/clear-all
+ * @access  Private
+ */
+export const clearAllNotifications = asyncHandler(async (req, res, next) => {
+  const result = await UserNotification.deleteMany({ userId: req.user._id });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'All notifications deleted successfully',
+    deletedCount: result.deletedCount,
+  });
+});

@@ -208,6 +208,12 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
 
   await task.save();
 
+  // Delete taskPosted notifications for all team leaders except the assigned team's leader
+  await UserNotification.deleteMany({
+    type: 'taskPosted',
+    data: task._id.toString(),
+    userId: { $ne: team.teamLeader._id },
+  });
 
   // Send notifications
   await Promise.all([

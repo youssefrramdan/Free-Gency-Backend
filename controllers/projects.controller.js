@@ -203,6 +203,7 @@ const getMyTeamProjects = asyncHandler(async (req, res, next) => {
   const projects = await Projects.find({ team: req.user.createdTeam })
     .populate('team', 'name logo')
     .populate('category', 'name')
+    .populate('service', 'name')
     .select('-__v -createdAt -updatedAt')
     .lean();
 

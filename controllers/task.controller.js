@@ -165,6 +165,7 @@ const getTasksByTeamCategory = asyncHandler(async (req, res, next) => {
   })
     .populate('client', 'name email')
     .populate('category', 'name')
+    .populate('assignedTeam', 'name logo')
     .populate('service', 'name');
 
   res.status(200).json({

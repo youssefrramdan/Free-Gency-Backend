@@ -26,7 +26,6 @@ class NotificationService {
       data: typeof data === 'object' ? data.data : data,
       isRead: false,
       sentAt: new Date(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
     });
 
     // Prepare Firebase message
@@ -67,7 +66,6 @@ class NotificationService {
           data: typeof data === 'object' ? data.data : data,
           isRead: false,
           sentAt: new Date(),
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         });
       })
     );
@@ -132,8 +130,8 @@ class NotificationService {
 
     return response;
   }
-  
-  static async sendNotificationToTeam  (
+
+  static async sendNotificationToTeam(
     token,
     title,
     message,
@@ -142,7 +140,7 @@ class NotificationService {
     type = 'request',
     actionUrl = null,
     data = {}
-  )  {
+  ) {
     if (!token) return;
 
     try {

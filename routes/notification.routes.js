@@ -6,7 +6,6 @@ import {
   markAllAsRead,
   deleteNotification,
   getUnreadCount,
-  deleteExpiredNotifications,
   getAllNotifications,
   clearAllNotifications,
 } from '../controllers/notification.controller.js';
@@ -33,10 +32,6 @@ router.get('/unread-count', getUnreadCount);
 
 // Mark all notifications as read
 router.patch('/read-all', markAllAsRead);
-
-
-// Delete expired notifications
-router.delete('/expired', deleteExpiredNotifications);
 
 // Delete a notification
 router.delete('/:notificationId', deleteNotification);

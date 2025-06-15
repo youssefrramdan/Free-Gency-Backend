@@ -8,7 +8,7 @@ import ApiError from '../utils/apiError.js';
  * @access  Private
  */
 export const createNotification = asyncHandler(async (req, res, next) => {
-  const { title, body, imageUrl, type, actionUrl, data, expiresAt } = req.body;
+  const { title, body, imageUrl, type, actionUrl, data } = req.body;
 
   const notification = await UserNotification.create({
     userId: req.user._id,
@@ -18,7 +18,6 @@ export const createNotification = asyncHandler(async (req, res, next) => {
     type,
     actionUrl,
     data,
-    expiresAt: expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   });
 
   res.status(201).json({
@@ -41,10 +40,6 @@ export const getMyNotifications = asyncHandler(async (req, res, next) => {
 
     case 'unRead':
       query.isRead = false;
-      break;
-
-    case 'active':
-      query.expiresAt = { $gt: new Date() };
       break;
 
     case 'all':
@@ -85,14 +80,13 @@ export const markAsRead = asyncHandler(async (req, res, next) => {
     {
       _id: notificationId,
       userId: req.user._id,
-      expiresAt: { $gt: new Date() },
     },
     { isRead: true },
     { new: true }
   );
 
   if (!notification) {
-    return next(new ApiError('Notification not found or has expired', 404));
+    return next(new ApiError('Notification not found', 404));
   }
 
   res.status(200).json({
@@ -111,14 +105,13 @@ export const markAllAsRead = asyncHandler(async (req, res, next) => {
     {
       userId: req.user._id,
       isRead: false,
-      expiresAt: { $gt: new Date() }, // Only mark active notifications as read
     },
     { isRead: true }
   );
 
   res.status(200).json({
     status: 'success',
-    message: 'All active notifications marked as read',
+    message: 'All notifications marked as read',
   });
 });
 
@@ -154,7 +147,6 @@ export const getUnreadCount = asyncHandler(async (req, res, next) => {
   const count = await UserNotification.countDocuments({
     userId: req.user._id,
     isRead: false,
-    expiresAt: { $gt: new Date() },
   });
 
   res.status(200).json({
@@ -166,27 +158,8 @@ export const getUnreadCount = asyncHandler(async (req, res, next) => {
 });
 
 /**
- * @desc    Delete expired notifications
- * @route   DELETE /api/v1/notifications/expired
- * @access  Private
- */
-export const deleteExpiredNotifications = asyncHandler(
-  async (req, res, next) => {
-    const result = await UserNotification.deleteMany({
-      userId: req.user._id,
-      expiresAt: { $lt: new Date() },
-    });
-
-    res.status(200).json({
-      status: 'success',
-      message: `${result.deletedCount} expired notifications deleted`,
-    });
-  }
-);
-
-/**
  * @desc    Get all notifications (admin only)
- * @route   GET /api/v1/notifications
+ * @route   GET /api/v1/notifications/all
  * @access  Private/Admin
  */
 export const getAllNotifications = asyncHandler(async (req, res, next) => {

@@ -22,25 +22,27 @@ router.post('/', createNotification);
 // Get user's notifications with filters
 router.get('/', getMyNotifications);
 
+// Clear all notifications for a user
+router.delete('/', clearAllNotifications);
+
 // Get all notifications (admin only)
 router.get('/all', getAllNotifications);
 
 // Get unread notifications count
 router.get('/unread-count', getUnreadCount);
 
-// Mark a notification as read
-router.patch('/:notificationId/read', markAsRead);
-
 // Mark all notifications as read
 router.patch('/read-all', markAllAsRead);
 
-// Delete a notification
-router.delete('/:notificationId', deleteNotification);
 
 // Delete expired notifications
 router.delete('/expired', deleteExpiredNotifications);
 
-// Clear all notifications for a user
-router.delete('/clear-all', clearAllNotifications);
+// Delete a notification
+router.delete('/:notificationId', deleteNotification);
+
+// Mark a notification as read
+router.patch('/:notificationId/read', markAsRead);
+
 
 export default router;

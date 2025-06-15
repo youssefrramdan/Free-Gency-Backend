@@ -203,7 +203,7 @@ export const getAllNotifications = asyncHandler(async (req, res, next) => {
 
 /**
  * @desc    Clear all notifications for a user
- * @route   DELETE /api/v1/notifications/clear-all
+ * @route   DELETE /api/v1/notifications
  * @access  Private
  */
 export const clearAllNotifications = asyncHandler(async (req, res, next) => {

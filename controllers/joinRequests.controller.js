@@ -72,7 +72,7 @@ const CreaterequestToJoinTeam = asyncHandler(async (req, res, next) => {
   const teamLeader = await User.findById(team.teamLeader).select('fcmToken');
   if (teamLeader) {
     await NotificationService.sendJoinTeamNotifications(
-      teamLeader.fcmToken,
+      team.teamLeader,
       'New Join Request',
       'New join request received',
       team.logo,
@@ -116,9 +116,9 @@ const getJoinRequests = asyncHandler(async (req, res, next) => {
     .sort({ createdAt: -1 });
 
   const grouped = { pending: [], accepted: [], rejected: [] };
-  for (const r of requests) {
+  requests.forEach(r => {
     grouped[r.status]?.push(r);
-  }
+  });
 
   res.status(200).json({
     status: 'success',

@@ -149,10 +149,9 @@ const deleteJob = asyncHandler(async (req, res, next) => {
 
   await jobModel.findByIdAndDelete(req.params.id);
 
-  res.status(204).json({
+  res.status(200).json({
     status: 'success',
     message: 'Job deleted successfully',
-    data: null,
   });
 });
 

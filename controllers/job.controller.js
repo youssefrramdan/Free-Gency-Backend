@@ -15,34 +15,31 @@ const createJob = asyncHandler(async (req, res, next) => {
     return next(new ApiError('User Not Found !!', 404));
   }
 
-  const { title, description, requiredSkills, type, location } = req.body;
+  const { title, description, requiredSkills } = req.body;
 
   const job = await jobModel.create({
     title,
     description,
     requiredSkills,
-    type,
-    location,
-    createdBy: userId,
+    imageCover: user.createdTeam.logo,
+    createdByTeam: user.createdTeam._id,
     category: user.createdTeam.categoty,
   });
 
   // Send notification to relevant users
-  const notificationTitle = '🎯 New Job Available';
-  const body = `📌 ${job.title} 👤 Posted by: ${user.name} 📍 Location: ${job.location} 💼 Type: ${job.type}`;
+  const notificationTitle = 'New Job Available';
+  const body = `📌 ${job.title} 👤 Posted by: ${user.name}`;
 
   await NotificationService.sendJobNotifications(
     job.category,
     notificationTitle,
     body,
-    user.profileImage,
-    'job-posted',
+    user.createdTeam.logo,
+    'jobPosted',
     `/jobs/${job._id}`,
     {
       jobId: job._id,
       category: job.category,
-      type: job.type,
-      location: job.location,
     }
   );
 
@@ -60,7 +57,7 @@ const createJob = asyncHandler(async (req, res, next) => {
 const getAllJobs = asyncHandler(async (req, res) => {
   const jobs = await jobModel
     .find()
-    .populate('createdBy', 'name profileImage')
+    .populate('createdByTeam', 'name')
     .populate('category', 'name')
     .sort('-createdAt');
 
@@ -71,10 +68,15 @@ const getAllJobs = asyncHandler(async (req, res) => {
   });
 });
 
-const getMyJobs = asyncHandler(async (req, res) => {
+const getMyJobs = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return next(new ApiError('User Not Found !!', 404));
+  }
+
   const jobs = await jobModel
-    .find({ createdBy: req.user._id })
-    .populate('createdBy', 'name profileImage')
+    .find({ createdByTeam: user.createdTeam._id })
+    .populate('createdByTeam', 'name')
     .populate('category', 'name')
     .sort('-createdAt');
 
@@ -92,8 +94,8 @@ const getMyJobs = asyncHandler(async (req, res) => {
  */
 const getJobsByCategory = asyncHandler(async (req, res, next) => {
   const jobs = await jobModel
-    .find({ category: req.params.categoryId })
-    .populate('createdBy', 'name profileImage')
+    .find({ category: req.user.createdTeam.categoty })
+    .populate('createdByTeam', 'name profileImage')
     .populate('category', 'name')
     .sort('-createdAt');
 
@@ -112,7 +114,7 @@ const getJobsByCategory = asyncHandler(async (req, res, next) => {
 const getJobById = asyncHandler(async (req, res, next) => {
   const job = await jobModel
     .findById(req.params.id)
-    .populate('createdBy', 'name profileImage')
+    .populate('createdByTeam', 'name')
     .populate('category', 'name');
 
   if (!job) {
@@ -138,7 +140,7 @@ const updateJob = asyncHandler(async (req, res, next) => {
   }
 
   // Check if user is authorized to update the job
-  if (job.createdBy.toString() !== req.user._id.toString()) {
+  if (job.createdByTeam.toString() !== req.user.createdTeam._id.toString()) {
     return next(new ApiError('Not authorized to update this job', 403));
   }
 
@@ -166,7 +168,7 @@ const deleteJob = asyncHandler(async (req, res, next) => {
   }
 
   // Check if user is authorized to delete the job
-  if (job.createdBy.toString() !== req.user._id.toString()) {
+  if (job.createdByTeam.toString() !== req.user.createdTeam._id.toString()) {
     return next(new ApiError('Not authorized to delete this job', 403));
   }
 

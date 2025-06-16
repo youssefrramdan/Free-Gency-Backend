@@ -10,12 +10,6 @@ const jobSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    type: {
-      type: String,
-    },
-    location: {
-      type: String,
-    },
     requiredSkills: [String],
     imageCover: {
       type: String,
@@ -24,9 +18,9 @@ const jobSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Category',
     },
-    createdBy: {
+    createdByTeam: {
       type: mongoose.Schema.ObjectId,
-      ref: 'User',
+      ref: 'Team',
     },
   },
   { timestamps: true }

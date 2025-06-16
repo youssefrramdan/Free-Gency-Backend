@@ -2,7 +2,6 @@ import asyncHandler from 'express-async-handler';
 import ApiError from '../utils/apiError.js';
 import jobModel from '../models/job.model.js';
 import User from '../models/user.model.js';
-import NotificationService from '../service/NotificationService.js';
 
 const createJob = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
@@ -33,13 +32,24 @@ const createJob = asyncHandler(async (req, res, next) => {
 });
 
 /**
- * @desc    Get all jobs
- * @route   GET /api/v1/jobs
+ * @desc    Get all jobs based on user interests or by category
+ * @route   GET /api/v1/jobs?categoryId=<categoryId>
  * @access  Public
  */
 const getAllJobs = asyncHandler(async (req, res) => {
+  const query = {};
+  const { categoryId } = req.query;
+
+  // If categoryId is provided, filter by specific category
+  if (categoryId) {
+    query.category = categoryId;
+  } else {
+    // Otherwise, filter by user interests
+    query.category = { $in: req.user.interests };
+  }
+
   const jobs = await jobModel
-    .find()
+    .find(query)
     .populate('createdByTeam', 'name')
     .populate('category', 'name')
     .sort('-createdAt');
@@ -70,24 +80,6 @@ const getMyJobs = asyncHandler(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    Get jobs by category
- * @route   GET /api/v1/jobs/category/:categoryId
- * @access  Public
- */
-const getJobsByCategory = asyncHandler(async (req, res, next) => {
-  const jobs = await jobModel
-    .find({ category: req.user.createdTeam.categoty })
-    .populate('createdByTeam', 'name profileImage')
-    .populate('category', 'name')
-    .sort('-createdAt');
-
-  res.status(200).json({
-    status: 'success',
-    results: jobs.length,
-    data: jobs,
-  });
-});
 
 /**
  * @desc    Get a specific job
@@ -166,7 +158,6 @@ const deleteJob = asyncHandler(async (req, res, next) => {
 export {
   createJob,
   getAllJobs,
-  getJobsByCategory,
   getJobById,
   getMyJobs,
   updateJob,

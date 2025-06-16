@@ -180,7 +180,10 @@ class NotificationService {
         type,
         imageUrl,
         actionUrl,
-        data
+        {
+          ...data,
+          userId: userId.toString(),
+        }
       );
     } catch (error) {
       console.error('Error sending join team notification:', error);

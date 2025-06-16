@@ -13,6 +13,7 @@ const router = express.Router();
 
 // Public routes
 router.get('/', protectedRoutes, getAllJobs);
+router.get('/me', protectedRoutes, getMyJobs);
 router.get('/:id', getJobById);
 
 // Protected routes
@@ -20,7 +21,6 @@ router.use(protectedRoutes);
 
 // Job CRUD operations
 router.post('/', createJob);
-router.get('/me', getMyJobs);
 router.put('/:id', updateJob);
 router.delete('/:id', deleteJob);
 

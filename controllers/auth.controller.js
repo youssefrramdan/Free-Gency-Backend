@@ -77,11 +77,11 @@ const signupAndCreateTeam = asyncHandler(async (req, res, next) => {
 
   const token = generateToken(user._id);
 
-  sendEmail({
-    email: req.body.email,
-    subject: 'Verification Email',
-    html: emailTemplate(token),
-  });
+//   sendEmail({
+//     email: req.body.email,
+//     subject: 'Verification Email',
+//     html: emailTemplate(token),
+//   });
 
   res.status(201).json({
     message: 'success',

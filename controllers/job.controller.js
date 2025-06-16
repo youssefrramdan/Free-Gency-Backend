@@ -26,23 +26,6 @@ const createJob = asyncHandler(async (req, res, next) => {
     category: user.createdTeam.categoty,
   });
 
-  // Send notification to relevant users
-  const notificationTitle = 'New Job Available';
-  const body = `📌 ${job.title} 👤 Posted by: ${user.name}`;
-
-  await NotificationService.sendJobNotifications(
-    job.category,
-    notificationTitle,
-    body,
-    user.createdTeam.logo,
-    'jobPosted',
-    `/jobs/${job._id}`,
-    {
-      jobId: job._id,
-      category: job.category,
-    }
-  );
-
   res.status(201).json({
     status: 'success',
     data: job,

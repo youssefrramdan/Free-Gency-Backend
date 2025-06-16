@@ -1,5 +1,6 @@
 import admin from '../firebase/firebase.js';
 import UserNotification from '../models/UserNotification.model.js';
+import Team from '../models/team.model.js';
 import User from '../models/user.model.js';
 
 class NotificationService {
@@ -7,8 +8,8 @@ class NotificationService {
     deviceToken,
     title,
     body,
+    type,
     imageUrl = null,
-    type = 'info',
     actionUrl = null,
     data = ''
   ) {
@@ -16,7 +17,7 @@ class NotificationService {
     if (!data.userId) throw new Error('userId is required');
 
     // Save notification to database
-    const notification = await UserNotification.create({
+    await UserNotification.create({
       userId: data.userId,
       title,
       body,
@@ -38,25 +39,21 @@ class NotificationService {
 
     // Send push notification
     const response = await admin.messaging().send(message);
-    return { ...response, notificationId: notification._id };
+    return response;
   }
 
   static async sendMultipleNotification(
     deviceTokens,
     title,
     body,
+    type,
     imageUrl,
-    type = 'info',
     actionUrl = null,
     data = ''
   ) {
-    const notifications = await Promise.all(
-      deviceTokens.map((token, index) => {
-        if (!data.userIds || !data.userIds[index]) {
-          console.warn(`No userId found for index ${index}`);
-          return null;
-        }
-        return UserNotification.create({
+    await Promise.all(
+      deviceTokens.map((token, index) =>
+        UserNotification.create({
           userId: data.userIds[index],
           title,
           body,
@@ -66,11 +63,9 @@ class NotificationService {
           data: typeof data === 'object' ? data.data : data,
           isRead: false,
           sentAt: new Date(),
-        });
-      })
+        })
+      )
     );
-
-    const validNotifications = notifications.filter(n => n !== null);
 
     const messages = deviceTokens.map(token => ({
       notification: { title, body, imageUrl },
@@ -78,19 +73,17 @@ class NotificationService {
     }));
 
     const response = await admin.messaging().sendEach(messages);
-    return {
-      ...response,
-      notificationIds: validNotifications.map(n => n._id),
-    };
+    return response;
   }
 
+  //   send notification to team leader for task posted
   static async sendTeamNotificationsByCategory(
     teams,
     category,
+    type,
     title,
     body,
     imageUrl,
-    type = 'info',
     actionUrl = null,
     data = ''
   ) {
@@ -119,8 +112,8 @@ class NotificationService {
       targetTokens.map(t => t.token),
       title,
       body,
-      imageUrl,
       type,
+      imageUrl,
       actionUrl,
       {
         data: data,
@@ -131,13 +124,14 @@ class NotificationService {
     return response;
   }
 
+  //   send notification to team leader for task requests
   static async sendNotificationToTeam(
     token,
     title,
-    message,
-    image,
+    body,
+    imageUrl,
     userId,
-    type = 'request',
+    type,
     actionUrl = null,
     data = {}
   ) {
@@ -147,9 +141,9 @@ class NotificationService {
       await NotificationService.sendNotification(
         token,
         title,
-        message,
-        image,
+        body,
         type,
+        imageUrl,
         actionUrl,
         {
           ...data,
@@ -162,44 +156,35 @@ class NotificationService {
     }
   }
 
-  static async sendJobNotifications(
-    category,
+  //   send notification to user for join team
+  static async sendJoinTeamNotifications(
+    userId,
     title,
     body,
     imageUrl,
-    type = 'info',
+    type = 'joinTeam',
     actionUrl = null,
     data = ''
   ) {
-    // Get all users who have this category in their interests array
-    const users = await User.find({
-      interests: { $in: [category] }, // Match if category exists in interests array
-      fcmToken: { $exists: true, $ne: null },
-    }).select('fcmToken _id');
-
-    if (users.length === 0) {
+    const user = await User.findById(userId).select('fcmToken _id');
+    if (!user) {
       return {
-        successCount: 0,
-        failureCount: 0,
-        message: 'No matching users found',
+        message: 'user not found',
       };
     }
-
-    // Send notifications to all matching users
-    const response = await this.sendMultipleNotification(
-      users.map(user => user.fcmToken),
-      title,
-      body,
-      imageUrl,
-      type,
-      actionUrl,
-      {
-        data: data,
-        userIds: users.map(user => user._id),
-      }
-    );
-
-    return response;
+    try {
+      await this.sendNotification(
+        user.fcmToken,
+        title,
+        body,
+        type,
+        imageUrl,
+        actionUrl,
+        data
+      );
+    } catch (error) {
+      console.error('Error sending join team notification:', error);
+    }
   }
 }
 

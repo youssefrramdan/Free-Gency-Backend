@@ -108,25 +108,23 @@ const createTaskRequest = asyncHandler(async (req, res, next) => {
     'fcmToken name profileImage'
   );
 
+  const type = 'taskRequest';
+  const { title } = task;
+  const body = buildNotificationMessage(task, team.teamLeader, {
+    ...newRequest,
+    budget,
+    note,
+  });
   // Send notification to client
   await NotificationService.sendNotificationToTeam(
     task.client.fcmToken,
-    task.title,
-    buildNotificationMessage(task, team.teamLeader, {
-      ...newRequest,
-      budget,
-      note,
-    }),
+    title,
+    body,
     team.logo,
     task.client._id,
-    'taskRequest',
+    type,
     `/tasks/${task._id}/requests`,
     {
-      taskId: task._id,
-      teamId: team._id,
-      teamName: team.name,
-      budget: budget,
-      status: 'pending',
       data: task.teamRequests[task.teamRequests.length - 1]._id,
     }
   );
@@ -231,12 +229,6 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
       'taskAccepted',
       `/tasks/${task._id}`,
       {
-        taskId: task._id,
-        requestId: request._id,
-        teamId: team._id,
-        teamName: team.name,
-        budget: request.budget,
-        status: 'accepted',
         data: task._id,
       }
     ),
@@ -287,12 +279,6 @@ const rejectTaskRequest = asyncHandler(async (req, res, next) => {
     'taskRejected',
     `/tasks/${task._id}`,
     {
-      taskId: task._id,
-      requestId: request._id,
-      teamId: team._id,
-      teamName: team.name,
-      budget: request.budget,
-      status: 'rejected',
       data: task._id,
     }
   );

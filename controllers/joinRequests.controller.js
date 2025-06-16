@@ -3,6 +3,7 @@ import Team from '../models/team.model.js';
 import JoinRequest from '../models/JoinRequest.model.js';
 import ApiError from '../utils/apiError.js';
 import User from '../models/user.model.js';
+import NotificationService from '../service/NotificationService.js';
 // ==========================================
 // Authorization helper
 // ==========================================
@@ -13,7 +14,9 @@ const canManageJoinRequest = async (userId, teamId) => {
   }
   const isOwner = team.teamLeader.toString() === userId.toString();
   const isLeaderInMembers = team.members.some(
-    member => member.user.toString() === userId.toString() && member.role === 'teamLeader'
+    member =>
+      member.user.toString() === userId.toString() &&
+      member.role === 'teamLeader'
   );
   if (!isOwner && !isLeaderInMembers) {
     throw new ApiError('You are not authorized to manage this request', 403);
@@ -32,16 +35,25 @@ const CreaterequestToJoinTeam = asyncHandler(async (req, res, next) => {
   if (!job) return next(new ApiError('Job role is required', 400));
 
   const team = await Team.findOne({ teamCode });
-  if (!team) return next(new ApiError(`Team not found for code ${teamCode}`, 404));
+  if (!team)
+    return next(new ApiError(`Team not found for code ${teamCode}`, 404));
 
-  const isAlreadyMember = team.members.some(member => member.user.equals(userId));
-  if (isAlreadyMember) return next(new ApiError('Already a member of this team', 400));
+  const isAlreadyMember = team.members.some(member =>
+    member.user.equals(userId)
+  );
+  if (isAlreadyMember)
+    return next(new ApiError('Already a member of this team', 400));
 
-  const existingRequest = await JoinRequest.findOne({ user: userId, team: team._id }).select('status');
+  const existingRequest = await JoinRequest.findOne({
+    user: userId,
+    team: team._id,
+  }).select('status');
   if (existingRequest) {
     switch (existingRequest.status) {
-      case 'pending': return next(new ApiError('Pending request already exists', 400));
-      case 'accepted': return next(new ApiError('Already accepted in this team', 400));
+      case 'pending':
+        return next(new ApiError('Pending request already exists', 400));
+      case 'accepted':
+        return next(new ApiError('Already accepted in this team', 400));
       case 'rejected':
       default:
         await JoinRequest.findByIdAndDelete(existingRequest._id);
@@ -56,6 +68,21 @@ const CreaterequestToJoinTeam = asyncHandler(async (req, res, next) => {
     status: 'pending',
     requestedAt: Date.now(),
   });
+
+  const teamLeader = await User.findById(team.teamLeader).select('fcmToken');
+  if (teamLeader) {
+    await NotificationService.sendJoinTeamNotifications(
+      teamLeader.fcmToken,
+      'New Join Request',
+      'New join request received',
+      team.logo,
+      'joinTeam',
+      `/teams/${team._id}/requests`,
+      {
+        data: joinRequest._id,
+      }
+    );
+  }
 
   const populatedRequest = await JoinRequest.findById(joinRequest._id)
     .select('-__v -updatedAt')
@@ -112,8 +139,12 @@ const getJoinRequests = asyncHandler(async (req, res, next) => {
  */
 const getSpecificJoinRequest = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
-  const request = await JoinRequest.findById(id).populate('user', 'name email profileImage');
-  if (!request) return next(new ApiError(`No request found with ID ${id}`, 404));
+  const request = await JoinRequest.findById(id).populate(
+    'user',
+    'name email profileImage'
+  );
+  if (!request)
+    return next(new ApiError(`No request found with ID ${id}`, 404));
 
   res.status(200).json({
     message: 'success',
@@ -157,7 +188,7 @@ const acceptJoinRequest = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     message: 'success',
     data: {
-      id: populatedRequest._id,
+      _id: populatedRequest._id,
       name: populatedRequest.user.name,
       status: populatedRequest.status,
       job: populatedRequest.job,
@@ -189,7 +220,10 @@ const rejectJoinRequest = asyncHandler(async (req, res, next) => {
 
 const deleteJoinRequest = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
-  const request = await JoinRequest.findById(id).populate('user', 'name email profileImage');
+  const request = await JoinRequest.findById(id).populate(
+    'user',
+    'name email profileImage'
+  );
 
   if (!request) return next(new ApiError('Join request not found', 404));
   await canManageJoinRequest(req.user._id, request.team);

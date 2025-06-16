@@ -62,15 +62,15 @@ const createTask = asyncHandler(async (req, res) => {
   // تجهيز الرسالة
   const title = `${task.title}`;
   const body = `${task.description}`;
-
+  const type = 'taskPosted';
   // Send notifications to teams with matching category
   await NotificationService.sendTeamNotificationsByCategory(
     teams,
     task.category,
+    type,
     title,
     body,
     taskWithClient.client.profileImage,
-    'taskPosted',
     `/tasks/${task._id}`,
     task._id.toString()
   );

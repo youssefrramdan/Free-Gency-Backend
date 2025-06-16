@@ -180,6 +180,18 @@ const acceptJoinRequest = asyncHandler(async (req, res, next) => {
   const user = await User.findById(request.user._id);
   await user.addTeam(team._id);
 
+  // Send notification to user about join request acceptance
+  await NotificationService.sendJoinRequestAcceptedNotification(
+    request.user._id,
+    team.name,
+    team.logo,
+    `/teams/${team._id}`,
+    {
+      teamId: team._id.toString(),
+      requestId: request._id.toString(),
+    }
+  );
+
   const populatedRequest = await JoinRequest.findById(request._id)
     .select('-__v -createdAt -updatedAt')
     .populate('responseBy', 'name role')

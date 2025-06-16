@@ -189,6 +189,39 @@ class NotificationService {
       console.error('Error sending join team notification:', error);
     }
   }
+
+  //   send notification to user when join request is accepted
+  static async sendJoinRequestAcceptedNotification(
+    userId,
+    teamName,
+    teamLogo = null,
+    actionUrl = null,
+    data = {}
+  ) {
+    const user = await User.findById(userId).select('fcmToken _id');
+    if (!user) {
+      return {
+        message: 'user not found',
+      };
+    }
+
+    try {
+      await this.sendNotification(
+        user.fcmToken,
+        'Join Request Accepted',
+        `Your request to join ${teamName} has been accepted!`,
+        'joinRequestAccepted',
+        teamLogo,
+        actionUrl,
+        {
+          ...data,
+          userId: userId.toString(),
+        }
+      );
+    } catch (error) {
+      console.error('Error sending join request accepted notification:', error);
+    }
+  }
 }
 
 export default NotificationService;

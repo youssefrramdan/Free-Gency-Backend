@@ -29,6 +29,7 @@ import {
   getSpecificTaskValidator,
   deleteSpecificTaskValidator,
 } from '../utils/validators/taskValidator.js';
+import subtasksRouter from './subtasks.routes.js';
 
 const taskRouter = express.Router();
 const upload = createUploader('tasksRequirement');
@@ -36,6 +37,9 @@ const uploadRequestImage = createUploader('propasl');
 
 // Protect all routes after this middleware
 taskRouter.use(protectedRoutes);
+
+// Mount subtasks router
+taskRouter.use('/:taskId/subtasks', subtasksRouter);
 
 // Routes for tasks
 taskRouter

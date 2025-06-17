@@ -49,15 +49,6 @@ const subTaskSchema = new mongoose.Schema(
   }
 );
 
-// Pre-save middleware to validate if task is assigned to a valid team member
-subTaskSchema.pre('save', async function (next) {
-  const user = await mongoose.model('User').findById(this.assignedTo);
-  if (!user || user.role !== 'team_member') {
-    throw new Error('Assigned user must be a team member');
-  }
-  next();
-});
-
 
 const SubTask = mongoose.model('SubTask', subTaskSchema);
 export default SubTask;

@@ -44,8 +44,11 @@ const createSubTask = asyncHandler(async (req, res, next) => {
 
   // Create the subtask
   const subtask = await SubTask.create({
-    ...req.body,
+    title: req.body.title,
+    description: req.body.description,
+    deadline: req.body.deadline,
     task: taskId,
+    assignedTo: req.body.assignedTo,
   });
 
   // Add the subtask to the task's assignedMembers array
@@ -54,12 +57,14 @@ const createSubTask = asyncHandler(async (req, res, next) => {
   });
 
   // Get assigned user for notification
-  const assignedUser = await User.findById(subtask.assignedTo);
+  const assignedUser = await User.findById(subtask.assignedTo).select(
+    'fcmToken'
+  );
   if (assignedUser?.fcmToken) {
     await NotificationService.sendNotificationToTeam(
       assignedUser.fcmToken,
       'New SubTask Assigned',
-      `You have been assigned a new subtask: ${subtask.title}`,
+      `You have been assigned to new subtask: ${subtask.title}`,
       req.user.profileImage,
       assignedUser._id,
       'subtaskAssigned',

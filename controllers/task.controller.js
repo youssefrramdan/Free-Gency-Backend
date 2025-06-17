@@ -153,11 +153,13 @@ const getAllMyTasks = asyncHandler(async (req, res) => {
 const getMyTasksForTeamLeader = asyncHandler(async (req, res, next) => {
   const team = await Team.findOne({ teamLeader: req.user._id });
   if (!team) {
-    return next(new ApiError('Team not found', 404));   
+    return next(new ApiError('Team not found', 404));
   }
   const tasks = await Task.find({ assignedTeam: team._id })
     .populate('category', 'name')
     .populate('service', 'name')
+    .populate('assignedTeam', 'name logo')
+    .populate('assignedMembers', 'profileImage')
     .select(
       '-client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v'
     )

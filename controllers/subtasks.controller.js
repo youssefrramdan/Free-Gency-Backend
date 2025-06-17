@@ -48,6 +48,11 @@ const createSubTask = asyncHandler(async (req, res, next) => {
     task: taskId,
   });
 
+  // Add the subtask to the task's assignedMembers array
+  await Task.findByIdAndUpdate(taskId, {
+    $push: { assignedMembers: subtask.assignedTo },
+  });
+
   // Get assigned user for notification
   const assignedUser = await User.findById(subtask.assignedTo);
   if (assignedUser?.fcmToken) {

@@ -86,7 +86,12 @@ const taskSchema = new mongoose.Schema(
         },
       },
     ],
-
+    assignedMembers: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+      },
+    ],
     fileName: String,
     fileUrl: String,
     taskFiles: [

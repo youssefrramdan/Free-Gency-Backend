@@ -158,7 +158,6 @@ const getMyTasksForTeamLeader = asyncHandler(async (req, res, next) => {
   const tasks = await Task.find({ assignedTeam: team._id })
     .populate('category', 'name')
     .populate('service', 'name')
-    .populate('assignedTeam', 'name logo')
     .populate('assignedMembers', 'profileImage')
     .select(
       '-client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v'

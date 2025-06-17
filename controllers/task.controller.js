@@ -145,6 +145,29 @@ const getAllMyTasks = asyncHandler(async (req, res) => {
     },
   });
 });
+/**
+ * @desc    Get all tasks for team leader
+ * @route   GET /api/v1/tasks/my-tasks
+ * @access  Private
+ */
+const getMyTasksForTeamLeader = asyncHandler(async (req, res, next) => {
+  const team = await Team.findOne({ teamLeader: req.user._id });
+  if (!team) {
+    return next(new ApiError('Team not found', 404));   
+  }
+  const tasks = await Task.find({ assignedTeam: team._id })
+    .populate('category', 'name')
+    .populate('service', 'name')
+    .select(
+      '-client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v'
+    )
+    .sort('-createdAt');
+  res.status(200).json({
+    status: 'success',
+    results: tasks.length,
+    data: tasks,
+  });
+});
 
 /**
  * @desc    Get tasks based on team category
@@ -426,4 +449,5 @@ export {
   saveTask,
   unsaveTask,
   getSavedTasks,
+  getMyTasksForTeamLeader,
 };

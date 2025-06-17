@@ -12,6 +12,7 @@ import {
   saveTask,
   unsaveTask,
   getSavedTasks,
+  getMyTasksForTeamLeader,
 } from '../controllers/task.controller.js';
 import {
   createTaskRequest,
@@ -56,6 +57,7 @@ taskRouter
   .route('/category')
   .get(allowTo('teamLeader'), getTasksByTeamCategory);
 taskRouter.route('/me').get(getAllMyTasks);
+taskRouter.route('/my-tasks').get(allowTo('teamLeader'), getMyTasksForTeamLeader);
 
 // Save/Unsave Routes
 taskRouter.get('/saved', getSavedTasks);

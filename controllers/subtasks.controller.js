@@ -6,6 +6,41 @@ import NotificationService from '../service/NotificationService.js';
 import User from '../models/user.model.js';
 
 // ==========================================
+// Helper Functions
+// ==========================================
+
+const formatSubtaskResponse = subtask => ({
+  subtaskDetails: {
+    id: subtask._id,
+    title: subtask.title,
+    description: subtask.description,
+    status: subtask.status,
+    deadline: subtask.deadline,
+  },
+  assignedTo: subtask.assignedTo
+    ? {
+        id: subtask.assignedTo._id,
+        name: subtask.assignedTo.name,
+        profileImage: subtask.assignedTo.profileImage,
+      }
+    : null,
+  comments: subtask.comments
+    ? subtask.comments.map(comment => ({
+        id: comment._id,
+        text: comment.text,
+        createdAt: comment.createdAt,
+        user: comment.user
+          ? {
+              id: comment.user._id,
+              name: comment.user.name,
+              profileImage: comment.user.profileImage,
+            }
+          : null,
+      }))
+    : [],
+});
+
+// ==========================================
 // Authorization Helper
 // ==========================================
 
@@ -56,6 +91,9 @@ const createSubTask = asyncHandler(async (req, res, next) => {
     $push: { assignedMembers: subtask.assignedTo },
   });
 
+  // Populate necessary fields
+  await subtask.populate('assignedTo', 'name profileImage');
+
   // Get assigned user for notification
   const assignedUser = await User.findById(subtask.assignedTo).select(
     'fcmToken'
@@ -77,7 +115,7 @@ const createSubTask = asyncHandler(async (req, res, next) => {
 
   res.status(201).json({
     status: 'success',
-    data: subtask,
+    data: formatSubtaskResponse(subtask),
   });
 });
 
@@ -113,13 +151,17 @@ const getSubTasks = asyncHandler(async (req, res, next) => {
   }
 
   const subtasks = await SubTask.find(query)
+    .select('title description status deadline comments assignedTo')
     .populate('assignedTo', 'name profileImage')
+    .populate('comments.user', 'name profileImage')
     .sort('deadline');
+
+  const response = subtasks.map(formatSubtaskResponse);
 
   res.status(200).json({
     status: 'success',
-    results: subtasks.length,
-    data: subtasks,
+    results: response.length,
+    data: response,
   });
 });
 
@@ -130,6 +172,7 @@ const getSubTasks = asyncHandler(async (req, res, next) => {
  */
 const getSpecificSubTask = asyncHandler(async (req, res, next) => {
   const subtask = await SubTask.findById(req.params.id)
+    .select('title description status deadline comments assignedTo')
     .populate('assignedTo', 'name profileImage')
     .populate('comments.user', 'name profileImage');
 
@@ -139,7 +182,7 @@ const getSpecificSubTask = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: subtask,
+    data: formatSubtaskResponse(subtask),
   });
 });
 
@@ -164,7 +207,10 @@ const updateSubTask = asyncHandler(async (req, res, next) => {
       new: true,
       runValidators: true,
     }
-  ).populate('assignedTo', 'name profileImage');
+  )
+    .select('title description status deadline comments assignedTo')
+    .populate('assignedTo', 'name profileImage')
+    .populate('comments.user', 'name profileImage');
 
   // If assignedTo was changed, send notification to new assignee
   if (
@@ -190,7 +236,7 @@ const updateSubTask = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: updatedSubTask,
+    data: formatSubtaskResponse(updatedSubTask),
   });
 });
 
@@ -226,16 +272,20 @@ const addComment = asyncHandler(async (req, res, next) => {
     return next(new ApiError('Comment text is required', 400));
   }
 
-  const subtask = await SubTask.findById(req.params.id).populate({
-    path: 'task',
-    populate: {
-      path: 'assignedTeam',
+  const subtask = await SubTask.findById(req.params.id)
+    .select('title description status deadline comments assignedTo')
+    .populate({
+      path: 'task',
       populate: {
-        path: 'teamLeader',
-        select: 'fcmToken name profileImage',
+        path: 'assignedTeam',
+        populate: {
+          path: 'teamLeader',
+          select: 'fcmToken name profileImage',
+        },
       },
-    },
-  });
+    })
+    .populate('assignedTo', 'name profileImage')
+    .populate('comments.user', 'name profileImage');
 
   if (!subtask) {
     return next(new ApiError('SubTask not found', 404));
@@ -255,7 +305,7 @@ const addComment = asyncHandler(async (req, res, next) => {
   // Get the team leader
   const { teamLeader } = subtask.task.assignedTeam;
 
-  // If comment is made by team leader, notify the assigned team member
+  // Handle notifications...
   if (req.user._id.toString() === teamLeader._id.toString()) {
     if (assignedMember?.fcmToken) {
       await NotificationService.sendNotificationToTeam(
@@ -271,9 +321,7 @@ const addComment = asyncHandler(async (req, res, next) => {
         }
       );
     }
-  }
-  // If comment is made by assigned team member, notify the team leader
-  else if (req.user._id.toString() === assignedMember._id.toString()) {
+  } else if (req.user._id.toString() === assignedMember._id.toString()) {
     if (teamLeader?.fcmToken) {
       await NotificationService.sendNotificationToTeam(
         teamLeader.fcmToken,
@@ -292,7 +340,7 @@ const addComment = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: subtask,
+    data: formatSubtaskResponse(subtask),
   });
 });
 
@@ -307,7 +355,11 @@ const updateStatus = asyncHandler(async (req, res, next) => {
     return next(new ApiError('Invalid status value', 400));
   }
 
-  const subtask = await SubTask.findById(req.params.id);
+  const subtask = await SubTask.findById(req.params.id)
+    .select('title description status deadline comments assignedTo')
+    .populate('assignedTo', 'name profileImage')
+    .populate('comments.user', 'name profileImage');
+
   if (!subtask) {
     return next(new ApiError('SubTask not found', 404));
   }
@@ -355,7 +407,7 @@ const updateStatus = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: subtask,
+    data: formatSubtaskResponse(subtask),
   });
 });
 

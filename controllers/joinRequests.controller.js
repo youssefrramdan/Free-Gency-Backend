@@ -191,6 +191,7 @@ const acceptJoinRequest = asyncHandler(async (req, res, next) => {
       requestId: request._id.toString(),
     }
   );
+  
 
   const populatedRequest = await JoinRequest.findById(request._id)
     .select('-__v -createdAt -updatedAt')

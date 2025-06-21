@@ -24,7 +24,7 @@ const createTaskValidator = [
       }
       return true;
     }),
-  check('services')
+  check('service')
   .notEmpty()
   .withMessage('Service is required')
   .isMongoId()

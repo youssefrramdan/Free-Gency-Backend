@@ -102,7 +102,15 @@ const createProject = asyncHandler(async (req, res, next) => {
 
   // Update team with new project in parallel with response
   team.Projects.push(project._id);
-  team.save().catch(err => console.error('Error updating team:', err));
+
+  // Handle team save properly to avoid unhandled rejection
+  try {
+    await team.save();
+  } catch (err) {
+    console.error('Error updating team:', err);
+    // Don't fail the main operation, just log the error
+    // The project was created successfully
+  }
 
   res.status(201).json({
     status: 'success',

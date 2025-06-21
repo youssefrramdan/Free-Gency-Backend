@@ -13,7 +13,8 @@ const createTaskValidator = [
     .isFloat({ gt: 0 })
     .withMessage('Budget must be a positive number'),
   check('category')
-    .optional()
+    .notEmpty()
+    .withMessage('Category is required')
     .isMongoId()
     .withMessage('Category must be a valid Mongo ID')
     .custom(async val => {
@@ -24,8 +25,9 @@ const createTaskValidator = [
       return true;
     }),
   check('services')
-    .optional()
-    .isMongoId()
+  .notEmpty()
+  .withMessage('Service is required')
+  .isMongoId()
     .withMessage('Service must be a valid Mongo ID')
     .custom(async (val, { req }) => {
       const service = await Service.findById(val);

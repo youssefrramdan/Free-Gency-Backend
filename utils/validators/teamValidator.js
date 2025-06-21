@@ -90,9 +90,9 @@ const updateMyTeamValidator = [
   check('aboutUs')
     .optional()
     .isString()
-    .withMessage('About us must be a string')
-    .isLength({ min: 100, max: 2000 })
-    .withMessage('About us must be between 100 and 2000 characters'),
+    .withMessage('About us must be a string'),
+    // .isLength({ min: 100, max: 2000 })
+    // .withMessage('About us must be between 100 and 2000 characters'),
   check('status')
     .optional()
     .isIn(['active', 'inactive', 'recruiting'])

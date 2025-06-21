@@ -318,6 +318,7 @@ const removeTeamMember = asyncHandler(async (req, res, next) => {
   // Remove team from user's teams array
   await User.findByIdAndUpdate(userId, {
     $pull: { teams: team._id },
+    role: 'client',
   });
 
   res.status(200).json({

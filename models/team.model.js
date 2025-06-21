@@ -116,8 +116,84 @@ const teamSchema = new mongoose.Schema(
     contactInfo: {
       email: String,
       phone: String,
-      website: String,
+      pricing: String,
     },
+
+    socialMediaLinks: {
+      linkedin: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?linkedin\.com\//.test(v);
+          },
+          message: 'Please provide a valid LinkedIn URL',
+        },
+      },
+      facebook: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?facebook\.com\//.test(v);
+          },
+          message: 'Please provide a valid Facebook URL',
+        },
+      },
+      twitter: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?(twitter\.com|x\.com)\//.test(v);
+          },
+          message: 'Please provide a valid Twitter/X URL',
+        },
+      },
+      instagram: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?instagram\.com\//.test(v);
+          },
+          message: 'Please provide a valid Instagram URL',
+        },
+      },
+      youtube: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?youtube\.com\//.test(v);
+          },
+          message: 'Please provide a valid YouTube URL',
+        },
+      },
+      website: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/.+/.test(v);
+          },
+          message: 'Please provide a valid website URL',
+        },
+      },
+      github: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?github\.com\//.test(v);
+          },
+          message: 'Please provide a valid GitHub URL',
+        },
+      },
+      behance: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?behance\.net\//.test(v);
+          },
+          message: 'Please provide a valid Behance URL',
+        },
+      },
+    },
+
     foundedAt: {
       type: Date,
       default: Date.now,
@@ -155,6 +231,20 @@ teamSchema.methods.updateAverageRating = async function () {
     this.averageRating = 0;
     this.ratingCount = 0;
   }
+  await this.save();
+};
+
+// Add method to update social media links
+teamSchema.methods.updateSocialMediaLinks = async function (links) {
+  if (links.linkedin) this.socialMediaLinks.linkedin = links.linkedin;
+  if (links.facebook) this.socialMediaLinks.facebook = links.facebook;
+  if (links.twitter) this.socialMediaLinks.twitter = links.twitter;
+  if (links.instagram) this.socialMediaLinks.instagram = links.instagram;
+  if (links.youtube) this.socialMediaLinks.youtube = links.youtube;
+  if (links.website) this.socialMediaLinks.website = links.website;
+  if (links.github) this.socialMediaLinks.github = links.github;
+  if (links.behance) this.socialMediaLinks.behance = links.behance;
+
   await this.save();
 };
 

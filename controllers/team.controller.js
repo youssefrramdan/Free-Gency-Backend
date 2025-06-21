@@ -101,7 +101,14 @@ const updateMyTeam = asyncHandler(async (req, res, next) => {
   }
 
   // Fields allowed to be updated
-  const allowedFields = ['name', 'aboutUs', 'status', 'contactInfo', 'skills'];
+  const allowedFields = [
+    'name',
+    'aboutUs',
+    'status',
+    'contactInfo',
+    'skills',
+    'socialMediaLinks',
+  ];
 
   // Update only allowed fields
   Object.keys(req.body).forEach(key => {

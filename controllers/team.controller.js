@@ -2,6 +2,7 @@ import asyncHandler from 'express-async-handler';
 import Team from '../models/team.model.js';
 import ApiError from '../utils/apiError.js';
 import User from '../models/user.model.js';
+import JoinRequest from '../models/JoinRequest.model.js';
 
 // ==========================================
 // Public Team Operations
@@ -320,6 +321,8 @@ const removeTeamMember = asyncHandler(async (req, res, next) => {
     $pull: { teams: team._id },
     role: 'client',
   });
+
+  await JoinRequest.findByIdAndDelete(userId);
 
   res.status(200).json({
     message: 'success',

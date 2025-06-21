@@ -77,11 +77,11 @@ const signupAndCreateTeam = asyncHandler(async (req, res, next) => {
 
   const token = generateToken(user._id);
 
-//   sendEmail({
-//     email: req.body.email,
-//     subject: 'Verification Email',
-//     html: emailTemplate(token),
-//   });
+  sendEmail({
+    email: req.body.email,
+    subject: 'Verification Email',
+    html: emailTemplate(token),
+  });
 
   res.status(201).json({
     message: 'success',
@@ -107,14 +107,14 @@ const login = asyncHandler(async (req, res, next) => {
     return next(new ApiError('user isnt exist', 401));
   }
 
-//   if (!user.isVerified) {
-//     return next(
-//       new ApiError(
-//         `Your Email is not verified. Please verify your email We send email at ${req.body.email}`,
-//         403
-//       )
-//     );
-//   }
+  if (!user.isVerified) {
+    return next(
+      new ApiError(
+        `Your Email is not verified. Please verify your email We send email at ${req.body.email}`,
+        403
+      )
+    );
+  }
 
   const isPasswordCorrect = await user.comparePassword(req.body.password);
   if (!isPasswordCorrect) {

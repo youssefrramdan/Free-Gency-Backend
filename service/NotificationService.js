@@ -222,6 +222,35 @@ class NotificationService {
       console.error('Error sending join request accepted notification:', error);
     }
   }
+
+  //   send notification to client when task is completed by team
+  static async sendTaskCompletedNotification(
+    userId,
+    taskTitle,
+    teamName,
+    teamLogo = null,
+    actionUrl = null,
+    data = {}
+  ) {
+    const user = await User.findById(userId).select('fcmToken _id');
+
+    try {
+      await this.sendNotification(
+        user.fcmToken,
+        'Task Completed',
+        `Your task "${taskTitle}" has been completed by ${teamName}`,
+        'taskCompleted',
+        teamLogo,
+        actionUrl,
+        {
+          ...data,
+          userId: userId.toString(),
+        }
+      );
+    } catch (error) {
+      console.error('Error sending task completed notification:', error);
+    }
+  }
 }
 
 export default NotificationService;

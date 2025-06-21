@@ -13,6 +13,7 @@ import {
   unsaveTask,
   getSavedTasks,
   getMyTasksForTeamLeader,
+  markAsCompleted,
 } from '../controllers/task.controller.js';
 import {
   createTaskRequest,
@@ -57,7 +58,14 @@ taskRouter
   .route('/category')
   .get(allowTo('teamLeader'), getTasksByTeamCategory);
 taskRouter.route('/me').get(getAllMyTasks);
-taskRouter.route('/my-tasks').get(allowTo('teamLeader'), getMyTasksForTeamLeader);
+taskRouter
+  .route('/my-tasks')
+  .get(allowTo('teamLeader'), getMyTasksForTeamLeader);
+
+// Mark task as completed route (Team Leaders only)
+taskRouter
+  .route('/:id/mark-completed')
+  .patch(allowTo('teamLeader'), markAsCompleted);
 
 // Save/Unsave Routes
 taskRouter.get('/saved', getSavedTasks);

@@ -439,6 +439,74 @@ const getSavedTasks = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Mark task as completed by team leader
+ * @route   PATCH /api/v1/tasks/:id/mark-completed
+ * @access  Private (Team Leader only)
+ */
+const markAsCompleted = asyncHandler(async (req, res, next) => {
+  const task = await Task.findById(req.params.id);
+
+  if (!task) {
+    return next(new ApiError('Task not found', 404));
+  }
+
+  // Check if task is assigned to a team
+  if (!task.assignedTeam) {
+    return next(new ApiError('Task is not assigned to any team', 400));
+  }
+
+  // Find the team and check if current user is the team leader
+  const team = await Team.findById(task.assignedTeam);
+  if (!team) {
+    return next(new ApiError('Assigned team not found', 404));
+  }
+
+  // Check if current user is the team leader
+  if (team.teamLeader.toString() !== req.user._id.toString()) {
+    return next(
+      new ApiError('Only team leader can mark task as completed', 403)
+    );
+  }
+
+  // Check if task is already completed
+  if (task.status === 'completed') {
+    return next(new ApiError('Task is already completed', 400));
+  }
+
+  // Update task status to completed
+  task.status = 'completed';
+  task.completedAt = Date.now();
+
+  // Add completion entry to task history
+  task.taskHistory.push({
+    action: 'Task marked as completed',
+    performedBy: req.user._id,
+    performedAt: Date.now(),
+  });
+
+  await task.save();
+
+  // Send notification to client
+  await NotificationService.sendTaskCompletedNotification(
+    task.client,
+    task.title,
+    team.name,
+    team.logo,
+    `/tasks/${task._id}`,
+    {
+      taskId: task._id.toString(),
+      teamId: team._id.toString(),
+    }
+  );
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Task marked as completed successfully',
+    data: task,
+  });
+});
+
 export {
   createTask,
   getAllTasks,
@@ -453,4 +521,5 @@ export {
   unsaveTask,
   getSavedTasks,
   getMyTasksForTeamLeader,
+  markAsCompleted,
 };

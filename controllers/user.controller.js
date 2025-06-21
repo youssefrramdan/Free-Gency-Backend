@@ -111,14 +111,7 @@ const getMe = asyncHandler(async (req, res, next) => {
       path: 'interests',
       select: 'name image status',
     })
-    .populate({
-      path: 'ratings',
-      select: '-__v -createdAt -updatedAt -ratedUser',
-      populate: {
-        path: 'ratedBy',
-        select: 'name profileImage -_id',
-      },
-    });
+    .select('-password -passwordChangedAt');
   res.status(200).json({
     message: 'success',
     user,

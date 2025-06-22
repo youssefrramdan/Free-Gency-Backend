@@ -211,6 +211,7 @@ const getSpecificTask = asyncHandler(async (req, res, next) => {
   const task = await Task.findById(req.params.id)
     .populate('client', 'name profileImage')
     .populate('category', 'name')
+    .populate('assignedMembers', 'profileImage')
     .populate({
       path: 'service',
       select: 'name',

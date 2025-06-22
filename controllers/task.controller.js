@@ -519,17 +519,19 @@ const getMyTasksForTeamMember = asyncHandler(async (req, res) => {
   const tasks = await Task.find({
     assignedMembers: { $in: [req.user._id] },
   })
-    .populate('client', 'name profileImage')
     .populate('category', 'name')
     .populate('service', 'name')
     .populate('assignedTeam', 'name logo')
-    .populate('assignedMembers', 'name profileImage')
-    .select('-requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v')
+    .populate('assignedMembers', 'profileImage')
+    .select(
+      '-client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v'
+    )
     .sort('-createdAt');
 
   res.status(200).json({
     status: 'success',
-    tasks,
+    results: tasks.length,
+    data: tasks,
   });
 });
 

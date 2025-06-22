@@ -118,7 +118,7 @@ const getAllTasks = asyncHandler(async (req, res, next) => {
  * @route   GET /api/v1/tasks
  * @access  Private (client)
  */
-const getAllMyTasks = asyncHandler(async (req, res) => {
+const getAllTasksForClient = asyncHandler(async (req, res) => {
   // Get tasks for the authenticated client
   const clientId = req.user._id;
   const tasks = await Task.find({ client: clientId })
@@ -509,11 +509,35 @@ const markAsCompleted = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Get all tasks for team member
+ * @route   GET /api/v1/tasks/my-assigned-tasks
+ * @access  Private (Team Member)
+ */
+const getMyTasksForTeamMember = asyncHandler(async (req, res) => {
+  // Get tasks where current user is in assignedMembers
+  const tasks = await Task.find({
+    assignedMembers: { $in: [req.user._id] },
+  })
+    .populate('client', 'name profileImage')
+    .populate('category', 'name')
+    .populate('service', 'name')
+    .populate('assignedTeam', 'name logo')
+    .populate('assignedMembers', 'name profileImage')
+    .select('-requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v')
+    .sort('-createdAt');
+
+  res.status(200).json({
+    status: 'success',
+    tasks,
+  });
+});
+
 export {
   createTask,
   getAllTasks,
   getTasksByTeamCategory,
-  getAllMyTasks,
+  getAllTasksForClient,
   getSpecificTask,
   updateSpecificTask,
   deleteSpecificTask,
@@ -523,5 +547,6 @@ export {
   unsaveTask,
   getSavedTasks,
   getMyTasksForTeamLeader,
+  getMyTasksForTeamMember,
   markAsCompleted,
 };

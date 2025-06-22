@@ -8,11 +8,12 @@ import {
   addTaskFiles,
   deleteTaskFile,
   getTasksByTeamCategory,
-  getAllMyTasks,
+  getAllTasksForClient,
   saveTask,
   unsaveTask,
   getSavedTasks,
   getMyTasksForTeamLeader,
+  getMyTasksForTeamMember,
   markAsCompleted,
 } from '../controllers/task.controller.js';
 import {
@@ -57,10 +58,15 @@ taskRouter
 taskRouter
   .route('/category')
   .get(allowTo('teamLeader'), getTasksByTeamCategory);
-taskRouter.route('/me').get(getAllMyTasks);
+taskRouter
+  .route('/me')
+  .get(allowTo('client', 'teamMember'), getAllTasksForClient);
 taskRouter
   .route('/my-tasks')
   .get(allowTo('teamLeader'), getMyTasksForTeamLeader);
+taskRouter
+  .route('/my-assigned-tasks')
+  .get(allowTo('teamMember'), getMyTasksForTeamMember);
 
 // Mark task as completed route (Team Leaders only)
 taskRouter

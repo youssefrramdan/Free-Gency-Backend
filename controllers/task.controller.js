@@ -124,6 +124,7 @@ const getAllMyTasks = asyncHandler(async (req, res) => {
   const tasks = await Task.find({ client: clientId })
     .populate('category', 'name')
     .populate('service', 'name')
+    .populate('assignedMembers', 'profileImage')
     .populate('assignedTeam', 'name logo')
     .select(
       '-client -requirment -teamRequests -taskFiles -taskHistory -updatedAt -__v'

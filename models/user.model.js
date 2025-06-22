@@ -48,6 +48,87 @@ const userSchema = new mongoose.Schema(
       type: String,
       maxlength: [500, 'Bio cannot exceed 500 characters'],
     },
+    contactInfo: {
+      email: String,
+      phone: String,
+      pricing: String,
+    },
+
+    socialMediaLinks: {
+      linkedin: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?linkedin\.com\//.test(v);
+          },
+          message: 'Please provide a valid LinkedIn URL',
+        },
+      },
+      facebook: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?facebook\.com\//.test(v);
+          },
+          message: 'Please provide a valid Facebook URL',
+        },
+      },
+      twitter: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?(twitter\.com|x\.com)\//.test(v);
+          },
+          message: 'Please provide a valid Twitter/X URL',
+        },
+      },
+      instagram: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?instagram\.com\//.test(v);
+          },
+          message: 'Please provide a valid Instagram URL',
+        },
+      },
+      youtube: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?youtube\.com\//.test(v);
+          },
+          message: 'Please provide a valid YouTube URL',
+        },
+      },
+      website: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/.+/.test(v);
+          },
+          message: 'Please provide a valid website URL',
+        },
+      },
+      github: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?github\.com\//.test(v);
+          },
+          message: 'Please provide a valid GitHub URL',
+        },
+      },
+      behance: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/(www\.)?behance\.net\//.test(v);
+          },
+          message: 'Please provide a valid Behance URL',
+        },
+      },
+    },
+
     isVerified: {
       type: Boolean,
       default: false,

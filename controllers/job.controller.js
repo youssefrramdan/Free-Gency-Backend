@@ -7,8 +7,9 @@ const createJob = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
   const user = await User.findById(userId).populate(
     'createdTeam',
-    'logo categoty'
+    'logo category'
   );
+  console.log(user);
 
   if (!user) {
     return next(new ApiError('User Not Found !!', 404));
@@ -79,7 +80,6 @@ const getMyJobs = asyncHandler(async (req, res, next) => {
     data: jobs,
   });
 });
-
 
 /**
  * @desc    Get a specific job
@@ -155,11 +155,4 @@ const deleteJob = asyncHandler(async (req, res, next) => {
   });
 });
 
-export {
-  createJob,
-  getAllJobs,
-  getJobById,
-  getMyJobs,
-  updateJob,
-  deleteJob,
-};
+export { createJob, getAllJobs, getJobById, getMyJobs, updateJob, deleteJob };

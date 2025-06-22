@@ -7,13 +7,13 @@ import {
   updateJob,
   deleteJob,
 } from '../controllers/job.controller.js';
-import { protectedRoutes } from '../controllers/auth.controller.js';
+import { allowTo, protectedRoutes } from '../controllers/auth.controller.js';
 
 const router = express.Router();
 
 // Public routes
 router.get('/', protectedRoutes, getAllJobs);
-router.get('/me', protectedRoutes, getMyJobs);
+router.get('/me', protectedRoutes, allowTo('teamLeader'), getMyJobs);
 router.get('/:id', getJobById);
 
 // Protected routes

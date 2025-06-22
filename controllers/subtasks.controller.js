@@ -86,9 +86,9 @@ const createSubTask = asyncHandler(async (req, res, next) => {
     assignedTo: req.body.assignedTo,
   });
 
-  // Add the subtask to the task's assignedMembers array
+  // Add the subtask to the task's assignedMembers array if not already present
   await Task.findByIdAndUpdate(taskId, {
-    $push: { assignedMembers: subtask.assignedTo },
+    $addToSet: { assignedMembers: subtask.assignedTo },
   });
 
   // Populate necessary fields
@@ -307,7 +307,7 @@ const addComment = asyncHandler(async (req, res, next) => {
 
 
 
-  
+
   // Handle notifications...
   if (req.user._id.toString() === teamLeader._id.toString()) {
     if (assignedMember?.fcmToken) {

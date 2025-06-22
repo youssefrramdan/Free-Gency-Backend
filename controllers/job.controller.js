@@ -9,8 +9,7 @@ const createJob = asyncHandler(async (req, res, next) => {
     'createdTeam',
     'logo category'
   );
-  console.log(user);
-
+  
   if (!user) {
     return next(new ApiError('User Not Found !!', 404));
   }
@@ -23,7 +22,7 @@ const createJob = asyncHandler(async (req, res, next) => {
     requiredSkills,
     imageCover: user.createdTeam.logo,
     createdByTeam: user.createdTeam._id,
-    category: user.createdTeam.categoty,
+    category: user.createdTeam.category,
   });
 
   res.status(201).json({

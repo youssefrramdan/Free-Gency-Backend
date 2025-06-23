@@ -50,7 +50,7 @@ taskRouter
   .get(getAllTasks)
   .post(
     upload.single('requirment'),
-    allowTo('client'),
+    allowTo('client', 'teamMember'),
     createTaskValidator,
     createTask
   );

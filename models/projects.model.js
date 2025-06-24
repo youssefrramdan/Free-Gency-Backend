@@ -55,6 +55,7 @@ const ProjectsSchema = new mongoose.Schema(
       min: 0,
       max: 5,
       get: function (v) {
+        if (v === 0) return 0.0;
         return parseFloat(v.toFixed(2));
       },
     },

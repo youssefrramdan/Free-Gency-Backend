@@ -248,5 +248,13 @@ teamSchema.methods.updateSocialMediaLinks = async function (links) {
   await this.save();
 };
 
+// Pre-save hook to ensure averageRating is always a double/float
+teamSchema.pre('save', function (next) {
+  if (this.averageRating !== undefined) {
+    this.averageRating = parseFloat(this.averageRating.toFixed(2));
+  }
+  next();
+});
+
 const Team = mongoose.model('Team', teamSchema);
 export default Team;

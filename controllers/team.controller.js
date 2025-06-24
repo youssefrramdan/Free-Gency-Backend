@@ -3,6 +3,7 @@ import Team from '../models/team.model.js';
 import ApiError from '../utils/apiError.js';
 import User from '../models/user.model.js';
 import JoinRequest from '../models/JoinRequest.model.js';
+import NotificationService from '../service/NotificationService.js';
 
 // ==========================================
 // Public Team Operations
@@ -323,6 +324,23 @@ const removeTeamMember = asyncHandler(async (req, res, next) => {
   });
 
   await JoinRequest.findByIdAndDelete(userId);
+
+  // Send notification to the removed member
+  const removedMember = await User.findById(userId).select('fcmToken');
+  if (removedMember?.fcmToken) {
+    await NotificationService.sendNotificationToTeam(
+      removedMember.fcmToken,
+      'Team Membership Update',
+      `You have been removed from team ${team.name}`,
+      team.logo,
+      userId,
+      'teamMemberRemoved',
+      null,
+      {
+        data: team._id.toString(),
+      }
+    );
+  }
 
   res.status(200).json({
     message: 'success',

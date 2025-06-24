@@ -51,9 +51,12 @@ const ProjectsSchema = new mongoose.Schema(
     ],
     averageRating: {
       type: Number,
-      default: 0.0,
-      min: 0.0,
-      max: 5.0,
+      default: 0,
+      min: 0,
+      max: 5,
+      get: function (v) {
+        return parseFloat(v.toFixed(2));
+      },
     },
     ratingCount: {
       type: Number,
@@ -62,6 +65,8 @@ const ProjectsSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { getters: true },
+    toObject: { getters: true },
   }
 );
 

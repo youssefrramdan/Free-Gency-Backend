@@ -54,10 +54,6 @@ const ProjectsSchema = new mongoose.Schema(
       default: 0,
       min: 0,
       max: 5,
-      get: function (v) {
-        if (v === 0) return 0.0;
-        return parseFloat(v.toFixed(2));
-      },
     },
     ratingCount: {
       type: Number,
@@ -66,8 +62,6 @@ const ProjectsSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    toJSON: { getters: true },
-    toObject: { getters: true },
   }
 );
 

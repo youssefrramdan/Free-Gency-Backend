@@ -51,9 +51,9 @@ const ProjectsSchema = new mongoose.Schema(
     ],
     averageRating: {
       type: Number,
-      default: 0,
-      min: 0,
-      max: 5,
+      default: 0.0,
+      min: 0.0,
+      max: 5.0,
     },
     ratingCount: {
       type: Number,

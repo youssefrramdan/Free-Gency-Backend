@@ -100,8 +100,8 @@ const teamSchema = new mongoose.Schema(
     ],
     averageRating: {
       type: Number,
-      default: 0.0,
-      min: 0.0,
+      default: 0.1,
+      min: 0.1,
       max: 5.0,
     },
     ratingCount: {
@@ -248,13 +248,6 @@ teamSchema.methods.updateSocialMediaLinks = async function (links) {
   await this.save();
 };
 
-// Pre-save hook to ensure averageRating is always a double/float
-teamSchema.pre('save', function (next) {
-  if (this.averageRating !== undefined) {
-    this.averageRating = parseFloat(this.averageRating.toFixed(2));
-  }
-  next();
-});
 
 const Team = mongoose.model('Team', teamSchema);
 export default Team;

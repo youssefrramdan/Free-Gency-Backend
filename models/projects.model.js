@@ -51,8 +51,8 @@ const ProjectsSchema = new mongoose.Schema(
     ],
     averageRating: {
       type: Number,
-      default: 0.0,
-      min: 0.0,
+      default: 0.1,
+      min: 0.1,
       max: 5.0,
     },
     ratingCount: {
@@ -86,13 +86,6 @@ ProjectsSchema.methods.updateAverageRating = async function () {
   await this.save();
 };
 
-// Pre-save hook to ensure averageRating is always a double/float
-ProjectsSchema.pre('save', function (next) {
-  if (this.averageRating !== undefined) {
-    this.averageRating = parseFloat(this.averageRating.toFixed(2));
-  }
-  next();
-});
 
 const Projects = mongoose.model('Projects', ProjectsSchema);
 export default Projects;

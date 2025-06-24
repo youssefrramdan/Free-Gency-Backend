@@ -225,10 +225,10 @@ teamSchema.methods.updateAverageRating = async function () {
   const ratings = await mongoose.model('Review').find({ ratedTeam: this._id });
   if (ratings.length > 0) {
     const totalRating = ratings.reduce((sum, rating) => sum + rating.rating, 0);
-    this.averageRating = totalRating / ratings.length;
+    this.averageRating = parseFloat((totalRating / ratings.length).toFixed(2));
     this.ratingCount = ratings.length;
   } else {
-    this.averageRating = 0;
+    this.averageRating = 0.0;
     this.ratingCount = 0;
   }
   await this.save();

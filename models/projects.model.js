@@ -16,7 +16,7 @@ const ProjectsSchema = new mongoose.Schema(
       required: [true, 'Project budget is required'],
     },
     imageCover: {
-        type : String,
+      type: String,
     },
     images: [String],
     projectUrl: String,
@@ -77,10 +77,10 @@ ProjectsSchema.methods.updateAverageRating = async function () {
     .find({ ratedProject: this._id });
   if (ratings.length > 0) {
     const totalRating = ratings.reduce((sum, rating) => sum + rating.rating, 0);
-    this.averageRating = totalRating / ratings.length;
+    this.averageRating = parseFloat((totalRating / ratings.length).toFixed(2));
     this.ratingCount = ratings.length;
   } else {
-    this.averageRating = 0;
+    this.averageRating = 0.0;
     this.ratingCount = 0;
   }
   await this.save();

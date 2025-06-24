@@ -229,11 +229,15 @@ const getMyTeamProjects = asyncHandler(async (req, res, next) => {
  */
 const getProjectsByInterests = asyncHandler(async (req, res, next) => {
   if (!req.user.interests?.length) {
+    const projects = await Projects.find()
+      .populate('team', 'name logo')
+      .select('title imageCover team averageRating ratingCount')
+      .sort('-createdAt')
+      .lean();
     return res.status(200).json({
       status: 'success',
-      results: 0,
-      data: [],
-      message: 'No interests found in your profile',
+      results: projects.length,
+      data: projects,
     });
   }
 
@@ -241,7 +245,7 @@ const getProjectsByInterests = asyncHandler(async (req, res, next) => {
     category: { $in: req.user.interests },
   })
     .populate('team', 'name logo')
-    .select('title imageCover team')
+    .select('title imageCover team averageRating ratingCount')
     .sort('-createdAt')
     .lean();
 

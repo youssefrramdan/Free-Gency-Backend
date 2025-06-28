@@ -50,7 +50,14 @@ const getAllJobs = asyncHandler(async (req, res) => {
 
   const jobs = await jobModel
     .find(query)
-    .populate('createdByTeam', 'name')
+    .populate({
+      path: 'createdByTeam',
+      select: 'name',
+      populate: {
+        path: 'teamLeader',
+        select: 'email name',
+      },
+    })
     .populate('category', 'name')
     .sort('-createdAt');
 

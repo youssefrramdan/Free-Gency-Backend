@@ -4,6 +4,7 @@ import SubTask from '../models/subtasks.model.js';
 import Task from '../models/task.model.js';
 import NotificationService from '../service/NotificationService.js';
 import User from '../models/user.model.js';
+import chatService from '../service/chatService.js';
 
 // ==========================================
 // Helper Functions
@@ -90,6 +91,14 @@ const createSubTask = asyncHandler(async (req, res, next) => {
   await Task.findByIdAndUpdate(taskId, {
     $addToSet: { assignedMembers: subtask.assignedTo },
   });
+
+  // إضافة العضو المُعيَّن للشات
+  try {
+    await chatService.addMemberToChat(taskId, subtask.assignedTo);
+  } catch (error) {
+    console.error('Error adding member to chat:', error);
+    // لا نوقف العملية، بس نسجل الخطأ
+  }
 
   // Populate necessary fields
   await subtask.populate('assignedTo', 'name profileImage');
@@ -200,6 +209,8 @@ const updateSubTask = asyncHandler(async (req, res, next) => {
   // Check authorization
   await isAuthorized(req.user._id, subtask.task, 'update this subtask');
 
+  const oldAssignedTo = subtask.assignedTo;
+
   const updatedSubTask = await SubTask.findByIdAndUpdate(
     req.params.id,
     req.body,
@@ -212,11 +223,21 @@ const updateSubTask = asyncHandler(async (req, res, next) => {
     .populate('assignedTo', 'name profileImage')
     .populate('comments.user', 'name profileImage');
 
+  // إذا تغير الـ assignedTo، نحدث الشات
+  if (req.body.assignedTo && req.body.assignedTo !== oldAssignedTo.toString()) {
+    try {
+      // إضافة العضو الجديد للشات
+      await chatService.addMemberToChat(subtask.task, req.body.assignedTo);
+
+      // sync الشات عشان نتأكد من التحديث الصحيح
+      await chatService.syncAssignedMembers(subtask.task);
+    } catch (error) {
+      console.error('Error updating chat members:', error);
+    }
+  }
+
   // If assignedTo was changed, send notification to new assignee
-  if (
-    req.body.assignedTo &&
-    req.body.assignedTo !== subtask.assignedTo.toString()
-  ) {
+  if (req.body.assignedTo && req.body.assignedTo !== oldAssignedTo.toString()) {
     const newAssignee = await User.findById(req.body.assignedTo);
     if (newAssignee?.fcmToken) {
       await NotificationService.sendNotificationToTeam(
@@ -254,7 +275,16 @@ const deleteSubTask = asyncHandler(async (req, res, next) => {
   // Check authorization
   await isAuthorized(req.user._id, subtask.task, 'delete this subtask');
 
+  const taskId = subtask.task;
+
   await SubTask.findByIdAndDelete(req.params.id);
+
+  // تحديث الشات بعد حذف الـ subtask
+  try {
+    await chatService.syncAssignedMembers(taskId);
+  } catch (error) {
+    console.error('Error syncing chat after subtask deletion:', error);
+  }
 
   res.status(200).json({
     message: 'SubTask deleted successfully',
@@ -304,9 +334,6 @@ const addComment = asyncHandler(async (req, res, next) => {
 
   // Get the team leader
   const { teamLeader } = subtask.task.assignedTeam;
-
-
-
 
   // Handle notifications...
   if (req.user._id.toString() === teamLeader._id.toString()) {

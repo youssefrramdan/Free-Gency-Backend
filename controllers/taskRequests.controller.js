@@ -6,6 +6,7 @@ import NotificationService from '../service/NotificationService.js';
 import Team from '../models/team.model.js';
 import UserNotification from '../models/UserNotification.model.js';
 import User from '../models/user.model.js';
+import chatService from '../service/chatService.js';
 
 // ==========================================
 // Authorization helper
@@ -206,6 +207,21 @@ const acceptTaskRequest = asyncHandler(async (req, res, next) => {
   });
 
   await task.save();
+
+  // Create project access for chat functionality
+  try {
+    await chatService.createProjectAccess({
+      projectId: task._id,
+      taskId: task._id,
+      clientId: task.client,
+      teamId: request.team,
+      teamLeaderId: team.teamLeader._id,
+    });
+    console.log(`Chat access created for task ${task._id}`);
+  } catch (error) {
+    console.error('Error creating project access:', error);
+    // Don't fail the main operation if chat access creation fails
+  }
 
   // Send notifications
   await Promise.all([

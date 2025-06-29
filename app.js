@@ -20,6 +20,7 @@ import reviewRouter from './routes/review.routes.js';
 import notificationRouter from './routes/notification.routes.js';
 import jobRouter from './routes/job.routes.js';
 import subtaskRouter from './routes/subtasks.routes.js';
+import chatRouter from './routes/chat.routes.js';
 
 dotenv.config({ path: './config/config.env' });
 
@@ -75,6 +76,7 @@ app.use('/api/v1/reviews', reviewRouter);
 app.use('/api/v1/notifications', notificationRouter);
 app.use('/api/v1/jobs', jobRouter);
 app.use('/api/v1/subtasks', subtaskRouter);
+app.use('/api/v1/chat', chatRouter);
 app.get('/ping', (req, res) => {
   res.status(200).send('pong');
 });

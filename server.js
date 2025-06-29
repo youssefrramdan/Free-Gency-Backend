@@ -1,11 +1,34 @@
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import app from './app.js';
 import databaseConnection from './config/dbConnection.js';
+import initializeSocket from './service/socketHandler.js';
 
 databaseConnection();
 const PORT = process.env.PORT || 8000;
 
-const server = app.listen(PORT, () => {
-  console.log(`server is running ${PORT} ....`);
+// Create HTTP server
+const server = createServer(app);
+
+// Initialize Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: '*', // In production, specify your Flutter app's origin
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+  transports: ['websocket', 'polling'],
+});
+
+// Initialize socket handlers
+initializeSocket(io);
+
+// Make io accessible throughout the app
+app.set('io', io);
+
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}....`);
+  console.log(`Socket.IO server initialized`);
 });
 
 // Handle errors that occur within promises but weren't caught

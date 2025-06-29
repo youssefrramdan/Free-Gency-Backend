@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>الشات - Free Gency</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+      body {
+        font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      }
+
+      .chat-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+      }
+
+      .no-messages {
+        text-align: center;
+        color: #718096;
+        padding: 40px 20px;
+        font-style: italic;
+      }
+
+      .no-messages i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card chat-card fade-in">
+        <!-- Chat Header -->
+        <div class="chat-header">
+          <div class="user-info">
+            <div class="user-avatar" id="userAvatar">UN</div>
+            <div>
+              <h2 id="userName">المستخدم</h2>
+              <div id="status" class="status status-loading">
+                جاري الاتصال...
+              </div>
+            </div>
+          </div>
+          <button id="logoutBtn" class="btn btn-secondary btn-small">
+            تسجيل الخروج
+          </button>
+        </div>
+
+        <!-- Project Selection -->
+        <div class="project-selection">
+          <label for="projectSelect">اختر المشروع:</label>
+          <select id="projectSelect">
+            <option value="">جاري تحميل المشاريع...</option>
+          </select>
+        </div>
+
+        <!-- Chat Content -->
+        <div class="chat-content">
+          <!-- Messages Container -->
+          <div id="messagesContainer" class="messages-container">
+            <div class="no-messages">
+              <div style="font-size: 48px; margin-bottom: 15px; opacity: 0.5">
+                💬
+              </div>
+              <p>اختر مشروعاً لبدء المحادثة</p>
+            </div>
+          </div>
+
+          <!-- Typing Indicator -->
+          <div
+            id="typingIndicator"
+            class="typing-indicator"
+            style="display: none"
+          >
+            شخص ما يكتب...
+          </div>
+
+          <!-- Message Input -->
+          <div class="message-input">
+            <input
+              type="text"
+              id="messageInput"
+              placeholder="اكتب رسالتك هنا..."
+              disabled
+            />
+            <button id="sendBtn" class="btn btn-primary btn-small" disabled>
+              إرسال
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/chat.js"></script>
+  </body>
+</html>

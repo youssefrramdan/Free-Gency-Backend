@@ -48,6 +48,8 @@ app.use(compression());
 // middlewares
 app.use(express.json());
 app.use(cookieParser());
+app.use(express.static('public')); // Serve static files from public directory
+
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
   console.log(`mode : ${process.env.NODE_ENV}`);
@@ -77,6 +79,11 @@ app.use('/api/v1/notifications', notificationRouter);
 app.use('/api/v1/jobs', jobRouter);
 app.use('/api/v1/subtasks', subtaskRouter);
 app.use('/api/v1/chat', chatRouter);
+// Serve frontend
+app.get('/', (req, res) => {
+  res.sendFile('index.html', { root: 'public' });
+});
+
 app.get('/ping', (req, res) => {
   res.status(200).send('pong');
 });

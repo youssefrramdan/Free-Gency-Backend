@@ -13,7 +13,7 @@ const authenticateSocket = (socket, next) => {
     return next(new Error('Authentication error: No token provided'));
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET_KEY, async (err, decoded) => {
     if (err) {
       return next(new Error('Authentication error: Invalid token'));
     }

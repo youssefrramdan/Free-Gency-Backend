@@ -104,12 +104,6 @@ taskRouter
 
 taskRouter.route('/requests/:requestId').get(getSpecificTaskRequest);
 
-taskRouter.use(allowTo('client'));
-
-taskRouter.route('/requests/:requestId/accept').patch(acceptTaskRequest);
-taskRouter.route('/requests/:requestId/reject').patch(rejectTaskRequest);
-taskRouter.route('/requests/:requestId').delete(deleteTaskRequest);
-
 // Submit task solution route (Team Members and Leaders only)
 taskRouter
   .route('/:id/submit-solution')
@@ -118,5 +112,12 @@ taskRouter
     upload.single('file'),
     submitTaskSolution
   );
+
+// Client-only routes
+taskRouter.use(allowTo('client'));
+
+taskRouter.route('/requests/:requestId/accept').patch(acceptTaskRequest);
+taskRouter.route('/requests/:requestId/reject').patch(rejectTaskRequest);
+taskRouter.route('/requests/:requestId').delete(deleteTaskRequest);
 
 export default taskRouter;

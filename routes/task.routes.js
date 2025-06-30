@@ -15,6 +15,7 @@ import {
   getMyTasksForTeamLeader,
   getMyTasksForTeamMember,
   markAsCompleted,
+  submitTaskSolution,
 } from '../controllers/task.controller.js';
 import {
   createTaskRequest,
@@ -108,5 +109,14 @@ taskRouter.use(allowTo('client'));
 taskRouter.route('/requests/:requestId/accept').patch(acceptTaskRequest);
 taskRouter.route('/requests/:requestId/reject').patch(rejectTaskRequest);
 taskRouter.route('/requests/:requestId').delete(deleteTaskRequest);
+
+// Submit task solution route (Team Members and Leaders only)
+taskRouter
+  .route('/:id/submit-solution')
+  .post(
+    allowTo('teamMember', 'teamLeader'),
+    upload.single('file'),
+    submitTaskSolution
+  );
 
 export default taskRouter;

@@ -4,6 +4,7 @@ import Task from '../models/task.model.js';
 import Team from '../models/team.model.js';
 import NotificationService from '../service/NotificationService.js';
 import User from '../models/user.model.js';
+import Message from '../models/message.model.js';
 
 // ==========================================
 // Authorization Helper
@@ -535,6 +536,60 @@ const getMyTasksForTeamMember = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * @desc    Submit solution for a task
+ * @route   POST /api/v1/tasks/:id/submit-solution
+ * @access  Private (Team Members and Leaders)
+ */
+const submitTaskSolution = asyncHandler(async (req, res, next) => {
+  const task = await Task.findById(req.params.id);
+
+  if (!task) {
+    return next(new ApiError('Task not found', 404));
+  }
+
+  // Check if user is assigned to this task
+  if (!task.assignedMembers.includes(req.user._id)) {
+    return next(new ApiError('You are not assigned to this task', 403));
+  }
+
+  if (!req.file || !req.body.description) {
+    return next(new ApiError('Please provide both file and description', 400));
+  }
+
+  // Create a new message in the task chat
+  const message = await Message.create({
+    taskId: task._id,
+    text: req.body.description,
+    senderId: req.user._id,
+    senderName: req.user.name,
+    senderImage: req.user.profileImage,
+    senderRole: req.user.role,
+    type: 'file',
+    fileUrl: req.file.path,
+    fileName: req.file.originalname,
+  });
+
+  // Send notification to client
+  await NotificationService.sendTaskNotification(
+    task.client,
+    'solution submitted',
+    `A solution has been submitted for task: ${task.title}`,
+    req.user.profileImage,
+    `/tasks/${task._id}`,
+    {
+      taskId: task._id.toString(),
+      messageId: message._id.toString(),
+    }
+  );
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Solution submitted successfully',
+    data: message,
+  });
+});
+
 export {
   createTask,
   getAllTasks,
@@ -551,4 +606,5 @@ export {
   getMyTasksForTeamLeader,
   getMyTasksForTeamMember,
   markAsCompleted,
+  submitTaskSolution,
 };

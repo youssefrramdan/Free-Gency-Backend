@@ -251,6 +251,49 @@ class NotificationService {
       console.error('Error sending task completed notification:', error);
     }
   }
+
+  /**
+   * Send notification for task-related events
+   * @param {string} userId - The ID of the user to receive the notification
+   * @param {string} title - The notification title
+   * @param {string} body - The notification body
+   * @param {string} imageUrl - URL of the image to show in notification
+   * @param {string} actionUrl - URL to navigate to when notification is clicked
+   * @param {Object} data - Additional data to include with notification
+   */
+  static async sendTaskNotification(
+    userId,
+    title,
+    body,
+    imageUrl = null,
+    actionUrl = null,
+    data = {}
+  ) {
+    const user = await User.findById(userId).select('fcmToken _id');
+    if (!user || !user.fcmToken) {
+      return {
+        message: 'User not found or has no FCM token',
+      };
+    }
+
+    try {
+      await this.sendNotification(
+        user.fcmToken,
+        title,
+        body,
+        'task',
+        imageUrl,
+        actionUrl,
+        {
+          ...data,
+          userId: userId.toString(),
+        }
+      );
+    } catch (error) {
+      console.error('Error sending task notification:', error);
+      // Don't fail the operation if notification fails
+    }
+  }
 }
 
 export default NotificationService;
